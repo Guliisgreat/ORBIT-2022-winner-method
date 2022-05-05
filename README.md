@@ -21,6 +21,9 @@ categories usually share similar backgrounds, and even multiple target user-spec
 support video sequence, and some frames suffer from "object_not_present_issue". Thus, randomly sampled clips from support video sequences will not contribute comprehensive information 
 on prototypes.
 
+## Our proposed method (chichi)
+ProtoNet aims to produce class prototypes from the support data points, thus the query data points can be classified by directly comparing their embeddings with the prototypes using a similarity metric. Due to the characteristics of the ORBIT-dataset that we investigated, there are several reasons that hinder the generation of high-quality prototypes. First, due to the distribution shift between support and query videos (clean VS clutter), using the same backbone with the episodic learning is sub-optimal as there is no interaction among the generated prototypes. Second, each user's videos are taken from limited scenes, which results in similar background or multiple target user-specific objects. Last but not least, dramatic appearance changes or camera movement of the support videos is oberved. It leads to "object_not_present_issue" in some cases, which controbutes poorly to the prototypes.
+
 To make the few-shot learner build high-quality prototypes at the personalization stage, we develop three techniques on top of the ProtoNet baseline method. 
 The pipeline is shown in Figure 1.
 
