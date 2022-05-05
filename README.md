@@ -22,7 +22,7 @@ support video sequence, and some frames suffer from "object_not_present_issue". 
 on prototypes.
 
 To make the few-shot learner build high-quality prototypes at the personalization stage, we develop three techniques on top of the ProtoNet baseline method. 
-The pipeline is shown in Figure 1
+The pipeline is shown in Figure 1.
 
 <p align = "center">
 <img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/orbit_pipline.JPG">
