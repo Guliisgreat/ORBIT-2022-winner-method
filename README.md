@@ -143,18 +143,18 @@ Experimental results on ORBIT datasets with EfficienNet_B0 backbone and images w
 
 [//]: # (Please use **train_fsl.py** and follow the instructions below. FEAT meta-learns the embedding adaptation process such that all the training instance embeddings in a task is adapted, based on their contextual task information, using Transformer. The file will automatically evaluate the model on the meta-test set with 10,000 tasks after given epochs.)
 
-[//]: # ()
-[//]: # (## Acknowledgment)
 
-[//]: # (We thank the following repos providing helpful components/functions in our work.)
+## Acknowledgment
 
-[//]: # (- [FEAT]&#40;https://github.com/Sha-Lab/FEAT/tree/47bdc7c1672e00b027c67469d0291e7502918950&#41;)
+We thank the following repos providing helpful components/functions in our work.
 
-[//]: # (- [PytorchVideo]&#40;https://github.com/facebookresearch/pytorchvideo&#41;)
+- [FEAT](https://github.com/Sha-Lab/FEAT/tree/47bdc7c1672e00b027c67469d0291e7502918950)
 
-[//]: # (- [lightning-hydra-template]&#40;https://github.com/ashleve/lightning-hydra-template&#41;)
+- [PytorchVideo](https://github.com/facebookresearch/pytorchvideo)
 
-[//]: # ()
+- [lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template)
+
+
 
 
 [//]: # (## Arguments)
