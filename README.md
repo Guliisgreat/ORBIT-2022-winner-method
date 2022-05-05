@@ -25,7 +25,7 @@ To make the few-shot learner build high quality prototypes at personalization st
 The pipeline is showed in Figure 1
 
 <p align = "center">
-<img src = "https://c4.wallpaperflare.com/wallpaper/382/758/444/turkey-dreams-of-cappadocia-avanos-nevsehir-wallpaper-preview.jpg">
+<img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/orbit_pipline.JPG">
 </p>
 <p align = "center">
 Fig.1 - our proposed method 
@@ -41,7 +41,7 @@ we evenly split the video sequence into multiple fix-sized and non-overlapped ch
 Specifically, if more than half of frames from one clip are identified with "object_not_present_issue", that clip will be removed.
 
 <p align = "center">
-<img src = "https://c4.wallpaperflare.com/wallpaper/382/758/444/turkey-dreams-of-cappadocia-avanos-nevsehir-wallpaper-preview.jpg">
+<img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/uniform_sampler.JPG">
 </p>
 <p align = "center">
 Fig.2 - our uniform support clips sampler 
