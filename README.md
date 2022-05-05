@@ -15,14 +15,14 @@
 - liuh127@mcmaster.ca
 
 ## Our proposed method
-ProtoNet baseline method performs not very well on ORBIT dataset because the few-shot learner cannot build high quality prototypes at personalization stage.
+ProtoNet baseline method does not perform very well on the ORBIT dataset because the few-shot learner cannot build high-quality prototypes at the personalization stage.
 To be specific, there are three reasons: Firstly, due to the distribution shift between support and query video sequences (clean vs clutter), using the shared backbone network to extract clip features from both two sets is sub-optimal. Secondly, each user's video frames from different object 
 categories usually share similar backgrounds,and even multiple target user-specific objects appear in one frame. Thirdly, there are dramatic appearance changes across each 
 support video sequence, and some frames suffer from "object_not_present_issue". Thus, randomly sampled clips from support video sequences will not contribute comprehensive information 
 on prototypes.
 
-To make the few-shot learner build high quality prototypes at personalization stage, we develop three techniques on top of the ProtoNet baseline method. 
-The pipeline is showed in Figure 1
+To make the few-shot learner build high-quality prototypes at the personalization stage, we develop three techniques on top of the ProtoNet baseline method. 
+The pipeline is shown in Figure 1
 
 <p align = "center">
 <img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/orbit_pipline.JPG">
@@ -33,12 +33,13 @@ Fig.1 - our proposed method
 
 1. During both training and testing, we add one transformer encoder block on prototypes, a similar idea from [FEAT, CVPR2020](https://openaccess.thecvf.com/content_CVPR_2020/papers/Ye_Few-Shot_Learning_via_Embedding_Adaptation_With_Set-to-Set_Functions_CVPR_2020_paper.pdf). 
 It can make each object's prototype adapted to the specific episode and highlight their most discriminative representation for a specific user. 
-Also, the transformer encoder block can map support features (clean) to the space close to the query (clutter) and enable to alleviate the distribution shift.
-2. During testing, we replace the random support clip sampler with the uniform sampler to make sure higher temporal coverages. To follow the common sampling technique in video
+Also, the transformer encoder block can map support features (clean) to the space close to the query (clutter) and help alleviate the distribution shift.
+
+2. During testing, we replace the random support clip sampler with the uniform sampler to make sure higher temporal coverages. To follow the common sampling technique in the video
 understanding task [SlowFast, ICCV 2019](https://openaccess.thecvf.com/content_ICCV_2019/papers/Feichtenhofer_SlowFast_Networks_for_Video_Recognition_ICCV_2019_paper.pdf), 
-we evenly split the video sequence into multiple fix-sized and non-overlapped chunks and sample one clip from each chunk. Details shown in Figure 2
-3. During testing, we apply an edge detector on each sampled support frames and use a hand-tuned threshold to determine whether the frame contains objects. 
-Specifically, if more than half of frames from one clip are identified with "object_not_present_issue", that clip will be removed.
+we evenly split the video sequence into multiple fix-sized and non-overlapped chunks and sample one clip from each chunk. Details are shown in Figure 2
+3. During testing, we apply an edge detector on each sampled support frame and use a hand-tuned threshold to determine whether the frame contains objects. 
+Specifically, if more than half of the frames from one clip are identified with "object_not_present_issue", that clip will be removed.
 
 <p align = "center">
 <img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/uniform_sampler.JPG">
