@@ -16,8 +16,8 @@
 
 ## Our proposed method
 ProtoNet baseline method does not perform very well on the ORBIT dataset because the few-shot learner cannot build high-quality prototypes at the personalization stage.
-To be specific, there are three reasons: Firstly, due to the distribution shift between support and query video sequences (clean vs clutter), using the shared backbone network to extract clip features from both two sets is sub-optimal. Secondly, each user's video frames from different object 
-categories usually share similar backgrounds,and even multiple target user-specific objects appear in one frame. Thirdly, there are dramatic appearance changes across each 
+To be specific, there are three reasons. Firstly, due to the distribution shift between support and query video sequences (clean vs clutter), using the shared backbone network to extract clip features from both two sets is sub-optimal. Secondly, each user's video frames from different object 
+categories usually share similar backgrounds, and even multiple target user-specific objects appear in one frame. Thirdly, there are dramatic appearance changes across each 
 support video sequence, and some frames suffer from "object_not_present_issue". Thus, randomly sampled clips from support video sequences will not contribute comprehensive information 
 on prototypes.
 
