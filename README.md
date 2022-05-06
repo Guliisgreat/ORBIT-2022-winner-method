@@ -101,16 +101,14 @@ To reproduce our experiments, please use **run.py**. There are four parts in the
    - `src/data`: our re-implemented data pipeline on ORBIT dataset
    - `src/tranform`: transform functions commonly used in episodic learning (meta learning) 
    - `src/learner`: added few shot learning methods (e.g. FEAT)
- - `pytorchlightning_trainer`: we follow the lightning-hydra template to make codes and experiments structured, readable and reproducible. 
+ - `pytorchlightning_trainer`: we follow the [pytorchlightning](https://www.pytorchlightning.ai/)-hydra template to make codes and experiments structured, readable and reproducible. 
 [why use lightning-hydra](https://github.com/ashleve/lightning-hydra-template)
-   - `pytorchlightning_trainer/callbacks`:  
-   - `pytorchlightning_trainer/datamodule`: 
-   - `pytorchlightning_trainer/module`: 
-   - `pytorchlightning_trainer/conf`: Hydra configuration files
-<<<<<<< HEAD
- - checkpoints: save pretrained models or checkpoints downloaded from GoogleDrive
-=======
->>>>>>> 1714e49a490028785eab8fb1f1c4bbbfbc96fe66
+   - `pytorchlightning_trainer/callbacks`:  Lightning callbacks
+   - `pytorchlightning_trainer/datamodule`: Lightning datamodules
+   - `pytorchlightning_trainer/module`: Lightning modules (Few-shot-learner)
+   - `pytorchlightning_trainer/conf`: [Hydra](https://hydra.cc/) configuration files
+ - `checkpoints`: save pretrained models or checkpoints downloaded from GoogleDrive
+
 
 
 ## Reproduce our best result on ORBIT Challenge 2022 Leaderboard
@@ -147,8 +145,3 @@ We thank the following repos providing helpful components/functions in our work.
 
 - [ORBIT Dataset](https://github.com/microsoft/ORBIT-Dataset)
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 1714e49a490028785eab8fb1f1c4bbbfbc96fe66
