@@ -73,10 +73,14 @@ Experimental results on ORBIT datasets with EfficienNet_B0 backbone and images w
 ## Prerequisites
 
 
-Install library dependencies:
-```shell
-conda create --name <your_env_name> --file requirements.txt
-```
+The following packages are required to run the scripts:
+- python 3.8
+- pytorch_lightning
+- torchmetrics
+- pytorch 1.10.0+cu102
+- torchvision 0.11.1+cu102
+- hydra
+- einops
 
 Set environment variables 
 ```shell
