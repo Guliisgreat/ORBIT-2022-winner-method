@@ -78,7 +78,7 @@ Install library dependencies:
 conda create --name <your_env_name> --file requirements.txt
 ```
 
-Set environment 
+Set environment variables 
 ```shell
 cd your_project_folder_path
 export PROJECT_ROOT= your_project_folder_path
@@ -93,6 +93,9 @@ Please download the dataset from [ORBIT benchmark](https://github.com/microsoft/
 -- validation
 -- annotation 
 ```
+To testing our best result, please download our best model checkpoint from [FEAT_data_aug](https://drive.google.com/drive/folders/1BhxylCNmAt6dQ-nHXw4Orv62kBiZkHAH?usp=sharing) into the folder `checkpoints`
+
+Then, please change the `load_pretrained` in `pytorchlightning_trainer/cfg/train/with_lite_test`.[here](https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/ab9c237896482c75861179588e7ec0a2afb7acbe/pytorchlightning_trainer/conf/train/with_lite_test.yaml#L19)
 ## Code Structures
 
 To reproduce our experiments, please use **run.py**. There are four parts in the code.
