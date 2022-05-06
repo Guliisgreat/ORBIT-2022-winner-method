@@ -56,7 +56,7 @@ Fig.2 - our uniform support clips sampler
 
 
 ## Our ORBIT  Results
-Experimental results on ORBIT datasets with EfficienNet_B0 backbone and images with 224 x 224 resolution. Please check the detailed experiment setups and hyperparameters in [] 
+Experimental results on ORBIT datasets with EfficienNet_B0 backbone and images with 224 x 224 resolution.
 
 |                                     | random seed | support clip sampler | data augment | missing object detector | Frame Accuracy | Checkpoint |
 |-------------------------------------|-------------|----------------------|--------------|-------------------------|----------------|------------|
@@ -67,7 +67,7 @@ Experimental results on ORBIT datasets with EfficienNet_B0 backbone and images w
 | FEAT + Uniform                      | 42          | Uniform              |              |                         | 70.69 (+4.42)  | [FEAT_baseline](https://drive.google.com/drive/folders/1juvUjdF-h65z_372hKIJKdW3OkzTG1Re?usp=sharing)           |
 | FEAT+Aug+Uniform                    | 42          | Uniform              |       ✓      |                         | 71.57 (+5.3)   | [FEAT_data_aug](https://drive.google.com/drive/folders/1BhxylCNmAt6dQ-nHXw4Orv62kBiZkHAH?usp=sharing)           |
 | Our best                            | 42          | Uniform              |       ✓      |            ✓            | 71.69 (+5.42)  | [FEAT_data_aug](https://drive.google.com/drive/folders/1BhxylCNmAt6dQ-nHXw4Orv62kBiZkHAH?usp=sharing)           |
-
+| Our best                            | 20          | Uniform              | ✓            | ✓                       | 71.78          | [FEAT_data_aug](https://drive.google.com/drive/folders/1BhxylCNmAt6dQ-nHXw4Orv62kBiZkHAH?usp=sharing)           |
 
 ## Prerequisites
 
