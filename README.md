@@ -82,6 +82,10 @@ The following packages are required to run the scripts:
 - hydra
 - einops
 
+```shell
+conda env create -f environment.yml
+```
+
 Set environment variables 
 ```shell
 cd your_project_folder_path
