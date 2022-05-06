@@ -1,0 +1,19 @@
+# reproducibility
+deterministic: True
+random_seed: 60
+
+# training
+exp_name: "(test_results)best_uniform_fixed_chunksize_20"
+
+skip_training: True # test mode
+
+
+pl_trainer:
+  fast_dev_run: False # Enable this for debug purposes
+  gpus: 1
+  precision: 32
+  num_sanity_val_steps: 0
+
+#load_pretrained: "/home/ligu/projects/orbit_challenge_2022_refactor/logs/tb_logs/(train)feat_with_lite_resume_from_6599_8799_0.5xLR/version_1/checkpoints/epoch=0-step=2199.ckpt"
+load_pretrained: "/home/ligu/projects/orbit_challenge_2022_refactor/logs/tb_logs/train_feat_data_aug/version_0/checkpoints/epoch=0-step=10999.ckpt"
+#load_pretrained: "/home/ligu/projects/orbit_challenge_2022_refactor/pretrained_checkpoint/orbit_cluve_protonets_efficientnetb0_224_lite.pth"

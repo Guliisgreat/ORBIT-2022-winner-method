@@ -1,0 +1,17 @@
+# reproducibility
+deterministic: True
+random_seed: 42
+
+# training
+exp_name: "protonet_with_lite_official_orbit_baseline"
+
+skip_training: True # test mode
+
+
+pl_trainer:
+  fast_dev_run: False # Enable this for debug purposes
+  gpus: 1
+  precision: 32
+  num_sanity_val_steps: 0
+
+load_pretrained: "/home/ligu/projects/orbit_challenge_2022_refactor/logs/tb_logs/feat_with_lite/version_1/checkpoints/epoch=0-step=6599.ckpt"

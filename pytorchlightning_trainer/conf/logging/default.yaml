@@ -1,0 +1,15 @@
+# log frequency
+
+
+val_check_interval: 0.1
+progress_bar_refresh_rate: 2
+log_every_n_steps: 16
+
+
+tensorboard:
+  logger_dir: "logs/tb_logs"
+
+
+lr_monitor:
+  logging_interval: "step"
+  log_momentum: False

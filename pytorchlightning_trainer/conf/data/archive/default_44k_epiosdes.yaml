@@ -1,0 +1,64 @@
+# Double the size of meta training: Num of episodes from 22k to 44k
+datamodule:
+  _target_: pytorchlightning_trainer.datamodule.ORBITDataModule
+
+  use_orbit_statistics: False
+
+  train_cfg:
+    root: "/data02/datasets/ORBIT_microsoft"
+    object_sampler: "random"
+    max_num_objects_per_user: 15
+    support_instance_sampler: "random"
+    query_instance_sampler: "random"
+    support_num_shot: 5
+    query_num_shot: 2
+    query_video_type: "clutter"
+    max_num_instance_per_object: 20
+    support_clip_sampler: "random"
+    query_clip_sampler: "random"
+    video_subsample_factor: 1
+    num_episodes_per_user: 1000
+    video_clip_length: 8
+    max_num_clips_per_video: 10
+    use_object_cluster_labels: False
+    num_threads: 8
+    num_workers: 2
+    batch_size: 1
+
+  val_cfg:
+    root: "/data02/datasets/ORBIT_microsoft"
+    object_sampler: "max"
+    max_num_objects_per_user: 100
+    support_instance_sampler: "max"
+    query_instance_sampler: "max"
+    query_video_type: "clutter"
+    max_num_instance_per_object: 20
+    support_clip_sampler: "random"
+    query_clip_sampler: "max"
+    video_subsample_factor: 1
+    num_episodes_per_user: 1
+    video_clip_length: 8
+    max_num_clips_per_video: 10
+    use_object_cluster_labels: False
+    num_threads: 8
+    num_workers: 2
+    batch_size: 1
+
+  test_cfg:
+    root: "/data02/datasets/ORBIT_microsoft"
+    object_sampler: "max"
+    max_num_objects_per_user: 100
+    support_instance_sampler: "max"
+    query_instance_sampler: "max"
+    query_video_type: "clutter"
+    max_num_instance_per_object: 20
+    support_clip_sampler: "random"
+    query_clip_sampler: "max"
+    video_subsample_factor: 1
+    num_episodes_per_user: 1
+    video_clip_length: 8
+    max_num_clips_per_video: 10
+    use_object_cluster_labels: False
+    num_threads: 8
+    num_workers: 2
+    batch_size: 1

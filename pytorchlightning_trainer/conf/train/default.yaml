@@ -1,0 +1,36 @@
+# reproducibility
+deterministic: True
+random_seed: 42
+
+# training
+exp_name: "protonet_with_lite_refactor_baseline"
+
+skip_training: False # train mode
+
+pl_trainer:
+  fast_dev_run: False # Enable this for debug purposes
+  gpus: 1
+  precision: 32
+  max_steps: 100000
+  max_epochs: 2
+  accumulate_grad_batches: 1
+  num_sanity_val_steps: 0
+#  track_grad_norm: 2
+#  gradient_clip_val: 10.0
+
+monitor_metric: 'val_acc'
+monitor_metric_mode: 'max'
+
+#early_stopping:
+#  patience: 42
+#  verbose: False
+
+
+#load_pretrained: "/home/ligu/projects/fsl_npt/logs/tb_logs/masked_protonet/mini_imagenet_ordered_0.9/version_0/checkpoints/epoch=0-step=7999.ckpt"
+
+model_checkpoints:
+  save_top_k: 5
+  verbose: False
+
+TensorboardModelDistribution:
+  type: "weight"

@@ -1,0 +1,32 @@
+# reproducibility
+deterministic: True
+random_seed: 42
+
+# training
+exp_name: "resume_from_your_previous_exp_name"
+
+skip_training: False # train mode
+
+pl_trainer:
+  fast_dev_run: False # Enable this for debug purposes
+  gpus: 1
+  precision: 32
+  max_steps: 100000
+  max_epochs: 2
+  accumulate_grad_batches: 1
+  num_sanity_val_steps: 0
+  track_grad_norm: 2
+
+
+monitor_metric: 'val_acc'
+monitor_metric_mode: 'max'
+
+
+load_pretrained: "your checkpoint (xx.ckpt)"
+
+model_checkpoints:
+  save_top_k: 15
+  verbose: False
+
+TensorboardModelDistribution:
+  type: "weight"

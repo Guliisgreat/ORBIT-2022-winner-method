@@ -1,0 +1,20 @@
+_target_: pytorchlightning_trainer.module.ProtoNetWithLITEVideoPost
+
+pretrained_backbone_checkpoint_path: "/home/ligu/projects/orbit_challenge_2022/features/pretrained/efficientnetb0_imagenet_224.pth"
+backbone_network: "efficientnetb0"
+unfreeze_backbone: True
+freeze_BN_layer: True
+normalization_layer: "basic"
+use_adapt_features: False
+feature_adaptation_method: "generate"
+classifier: "feat"
+video_clip_length: 8
+episode_subset_mini_batch_size: 8
+num_episodes_per_meta_batch: 16
+num_lite_samples: 8
+use_two_gpus: False
+
+lr: 0.0001
+
+
+
