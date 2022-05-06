@@ -126,7 +126,7 @@ train.exp_name="reproduce_our_training_result"
 python run.py
 data=test_support_sampler_uniform_fixed_chunk_size_10 
 model=feat_with_lite_video_post 
-train= with_lite_test 
+train=with_lite_test 
 train.exp_name="reproduce_our_testing_result"
 ```
 
