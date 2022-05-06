@@ -15,6 +15,7 @@
 - liuh127@mcmaster.ca
 
 <!-- ## Our proposed method
+
 ProtoNet baseline method does not perform very well on the ORBIT dataset because the few-shot learner cannot build high-quality prototypes at the personalization stage.
 To be specific, there are three reasons. Firstly, due to the distribution shift between support and query video sequences (clean vs clutter), using the shared backbone network to extract clip features from both two sets is sub-optimal. Secondly, each user's video frames from different object 
 categories usually share similar backgrounds, and even multiple target user-specific objects appear in one frame. Thirdly, there are dramatic appearance changes across each 
@@ -22,7 +23,9 @@ support video sequence, and some frames suffer from "object_not_present_issue". 
 on prototypes. -->
 
 ## Our proposed method
-ProtoNet aims to produce class prototypes from the support data samples at the personalization stage, and the query data samples can be classified by directly comparing their embeddings with the prototypes using a similarity metric at the recognization stage. Due to the characteristics of the ORBIT-dataset, there are several reasons that hinder the generation of high-quality prototypes. First, due to the distribution shift between support and query videos (clean vs. clutter), using the same backbone extract clip features from both two sets is sub-optimal. Second, each user's videos are collected from limited scenes, which results in similar background or multiple target user-specific objects[issue](https://github.com/microsoft/ORBIT-Dataset/issues/4). Thirdly, there are dramatic appearance changes across each support video sequence, and some frames suffer from "object_not_present_issue". Thus, randomly sampled clips from support video sequences will not contribute comprehensive information 
+### [video](https://mcmasteru365-my.sharepoint.com/:v:/g/personal/liuh127_mcmaster_ca/EdZHIOxqoFhAn5UUj85Q2fQBZd6YYKFsuemTQOtw3X6WDA?e=XNB53A)
+
+ProtoNet aims to produce class prototypes from the support data samples at the personalization stage, and the query data samples can be classified by directly comparing their embeddings with the prototypes using a similarity metric at the recognization stage. Due to the characteristics of the ORBIT-dataset, there are several reasons that hinder the generation of high-quality prototypes. First, due to the distribution shift between support and query videos (clean vs. clutter), using the same backbone extract clip features from both two sets is sub-optimal. Second, each user's videos are collected from limited scenes, which results in similar background or multiple target user-specific objects [issue](https://github.com/microsoft/ORBIT-Dataset/issues/4). Thirdly, there are dramatic appearance changes across each support video sequence, and some frames suffer from "object_not_present_issue". Thus, randomly sampled clips from support video sequences will not contribute comprehensive information 
 on prototypes.
 
 To make the few-shot learner build high-quality prototypes at the personalization stage, we develop three techniques on top of the ProtoNet baseline method. 
@@ -41,9 +44,7 @@ Also, the transformer encoder block can map support features (clean) to the spac
 
 1. We add one transformer encoder block on top of prototypes, a similar idea borrowed from [FEAT, CVPR2020](https://openaccess.thecvf.com/content_CVPR_2020/papers/Ye_Few-Shot_Learning_via_Embedding_Adaptation_With_Set-to-Set_Functions_CVPR_2020_paper.pdf). It enforces the interaction among the prototypes to yield more discriminative representation and adapt better to the users in the current episode.  It also helps to reduce the distribution shift by mapping both features to a more similar feature space.
 
-2. During testing, we replace the random support clip sampler with the uniform sampler to make sure higher temporal coverages. To follow the common sampling technique in the video
-understanding task [SlowFast, ICCV 2019](https://openaccess.thecvf.com/content_ICCV_2019/papers/Feichtenhofer_SlowFast_Networks_for_Video_Recognition_ICCV_2019_paper.pdf), 
-we evenly split the video sequence into multiple fix-sized and non-overlapped chunks and sample one clip from each chunk. Details are shown in Figure 2
+2. During testing, we replace the random support clip sampler with the uniform sampler to make sure higher temporal coverages. We firstly split each support video sequence into multiple fix-sized and non-overlapped clips following ORBIT codebase, and then further evenly split clips into non-overlapped chunks, where each chunk has same number of clips. At last, we sample one clip from each chunk. Details are shown in Figure 2
 3. During testing, we apply an edge detector on each sampled support frame and use a hand-tuned threshold to determine whether the frame contains objects. 
 Specifically, if more than half of the frames from one clip are identified with "object_not_present_issue", that clip will be removed.
 
