@@ -38,6 +38,8 @@ Fig.1 - our proposed method
 It can make each object's prototype adapted to the specific episode and highlight their most discriminative representation for a specific user. 
 Also, the transformer encoder block can map support features (clean) to the space close to the query (clutter) and help alleviate the distribution shift.
 
+  ChiChi: We add one transformer encoder block on top of prototypes, a similar idea borrowed from [FEAT, CVPR2020](https://openaccess.thecvf.com/content_CVPR_2020/papers/Ye_Few-Shot_Learning_via_Embedding_Adaptation_With_Set-to-Set_Functions_CVPR_2020_paper.pdf). It enforces the interaction among the prototypes to yield more discriminative representation and adapt better to the users in the current episode.  It also helps to reduce the distribution shift by mapping both features to a more common feature space.
+
 2. During testing, we replace the random support clip sampler with the uniform sampler to make sure higher temporal coverages. To follow the common sampling technique in the video
 understanding task [SlowFast, ICCV 2019](https://openaccess.thecvf.com/content_ICCV_2019/papers/Feichtenhofer_SlowFast_Networks_for_Video_Recognition_ICCV_2019_paper.pdf), 
 we evenly split the video sequence into multiple fix-sized and non-overlapped chunks and sample one clip from each chunk. Details are shown in Figure 2
