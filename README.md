@@ -106,9 +106,10 @@ To reproduce our experiments, please use **run.py**. There are four parts in the
 [why use lightning-hydra](https://github.com/ashleve/lightning-hydra-template)
    - `pytorchlightning_trainer/callbacks`:  Lightning callbacks
    - `pytorchlightning_trainer/datamodule`: Lightning datamodules
-   - `pytorchlightning_trainer/module`: Lightning modules (Few-shot-learner)
+   - `pytorchlightning_trainer/module`: Lightning modules
    - `pytorchlightning_trainer/conf`: [Hydra](https://hydra.cc/) configuration files
- - `checkpoints`: save pretrained models or checkpoints downloaded from GoogleDrive
+ - `checkpoints`: please downloaded checkpoints from GoogleDrive Links in Table.
+ - `logs/tb_logs`: the training logging results (tensorboard) and testing results (orbit_submission.json) will be automatically saved
 
 
 
