@@ -9,6 +9,7 @@
 - Huan Liu
 - Yuanhao Yu
 - Yang Wang
+- Jin Tang
 
 **Contact**
 - li.gu@huawei.com
