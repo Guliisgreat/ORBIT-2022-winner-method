@@ -49,7 +49,7 @@ Also, the transformer encoder block can map support features (clean) to the spac
 Specifically, if more than half of the frames from one clip are identified with "object_not_present_issue", that clip will be removed.
 
 <p align = "center">
-<img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/uniform_sampler.JPG">
+<img src = "https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/main/docs/uniform_sampler2.JPG">
 </p>
 <p align = "center">
 Fig.2 - our uniform support clips sampler 
