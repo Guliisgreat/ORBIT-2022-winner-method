@@ -45,8 +45,8 @@ Also, the transformer encoder block can map support features (clean) to the spac
 
 1. We add one transformer encoder block on top of prototypes, a similar idea borrowed from [FEAT, CVPR2020](https://openaccess.thecvf.com/content_CVPR_2020/papers/Ye_Few-Shot_Learning_via_Embedding_Adaptation_With_Set-to-Set_Functions_CVPR_2020_paper.pdf). It enforces the interaction among the prototypes to yield more discriminative representations and adapt better to the users in the current episode.  It also helps to reduce the distribution shift by mapping both features to a more similar feature space.
 
-2. During testing, we replace the random support clip sampler with the uniform sampler to make sure higher temporal coverages. We firstly split each support video sequence into multiple fix-sized and non-overlapped clips following ORBIT codebase, and then further evenly split clips into non-overlapped chunks, where each chunk has same number of clips. At last, we sample one clip from each chunk. Figure 2 demonstrates the details.
-3. During testing, we apply an edge detector on each sampled support frame and use a hand-tuned threshold to determine whether the frame contains objects. 
+2. During testing, we replace the random support clip sampler by the uniform sampler to achieve higher temporal coverages. We firstly split each support video sequence into multiple fix-sized and non-overlapped clips following ORBIT codebase, and then evenly split clips into non-overlapped chunks. Each chunk has same number of clips. At last, we sample one clip from each chunk. Figure 2 demonstrates the details.
+3. During testing, we apply an edge detector on each sampled support frame and set a empirical threshold to determine whether the frame contains objects. 
 Specifically, if more than half of the frames from one clip are identified with "object_not_present_issue", that clip will be removed.
 
 <p align = "center">
