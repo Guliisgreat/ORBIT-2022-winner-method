@@ -35,8 +35,8 @@ class ClipSampler(ABC):
                 clip_length (int): the number of frames in each sampled video clip
                 num_sampled_clips (int): the number of video clips to be sampled
                 max_num_frame (int): the first maximum number of frames will be access when sampling clips
-                subsample_factor (int): the stride of sampled frames;
-                    if = 1, one video clip will include continuous frames
+                subsample_factor (int): the stride for frame sampling;
+                    if the factor set to 1, all frames are sampled.
         """
         self.clip_length = clip_length
         self.num_sampled_clips = num_sampled_clips
@@ -54,7 +54,7 @@ class ClipSampler(ABC):
 class FixedMultiClipSampler(ClipSampler):
     """
         For each video sequence, we firstly split the video sequence evenly into multiple fix-sized clip candidates,
-        then randomly sample the fixed number of clips from those clip candidates.
+        then randomly sample a fixed number of clips from those clip candidates.
     """
 
     def __init__(
@@ -108,7 +108,7 @@ class FixedMultiClipSampler(ClipSampler):
 
 class RandomMultiClipSampler(FixedMultiClipSampler):
     """
-        For each video sequence, we firstly randomly determine how many clips (k) will be sampled, and then select k
+        For each video sequence, we firstly randomly generate a number k to determine how many clips (k) would be sampled, and then select k
         clips from clip candidates.
     """
     def _sample_clips(self, non_overlapping_clips_candidates: List):
@@ -122,8 +122,8 @@ class RandomMultiClipSampler(FixedMultiClipSampler):
 
 class MaxMultiClipSampler(FixedMultiClipSampler):
     """
-        For each video sequence, we select all clip candidates. It is required to be used for the query video sequences
-        in testing, because all frames of one video must be predicted and evaluated.
+        For each video sequence, we select all clip candidates. It is used in sampling the query video sequences
+        during testing, because all frames of one video must be evaluated.
     """
     def _sample_clips(self, non_overlapping_clips_candidates: List):
         num_sampled_clips = len(non_overlapping_clips_candidates)
@@ -135,10 +135,10 @@ class MaxMultiClipSampler(FixedMultiClipSampler):
 
 class UniformFixedNumberClipsMultiClipSampler(FixedMultiClipSampler):
     """
-        To make higher temporal coverage, we need to uniformly sample K clips across each video sequence
+        To achieve high temporal coverage, we propose to uniformly sample K clips across each video sequence.
         We firstly split non-overlapped clip candidates evenly into K chunks, and then randomly select one clip from
-        each chunk. The different video length will lead to different chunk size of each video sequence.
-        Thus, the short video will have higher sampling rate.
+        each chunk. The different video length of each video sequence can result in different chunk sizes.
+        Thus, short videos have higher sampling rate.
     """
     def _sample_clips(self, non_overlapping_clips_candidates: List):
         num_sampled_clips = min(len(non_overlapping_clips_candidates), self.num_sampled_clips)
@@ -152,14 +152,13 @@ class UniformFixedNumberClipsMultiClipSampler(FixedMultiClipSampler):
 
 class UniformFixedChunkSizeMultiClipSampler(FixedMultiClipSampler):
     """
-        To avoid the above issue where video sequences have different sampling rates, we fix the chunk size and the
-        number of sampled clips depends on the video length. As a result, we can keep the same sampling rate on
-        each video sequence.
+        To alleviate the above issue that video sequences have different sampling rates, we fix the chunk size when sampling. This sampling strategy allows the
+        number of sampled clips is propotional to the video length. As a result, each video sequence can be sampled by the same sampling rate.
     """
 
     def _sample_clips(self, non_overlapping_clips_candidates: List):
         """
-            chunk_size: the number of candidates in each chunk; One clip will be sampled from each chunk
+            chunk_size: the number of candidates in each chunk; One clip is sampled from each chunk.
 
         """
         # In ORBIT, 1000 / 8 = 125 candidates /10 = 12 candidates per chunk
@@ -176,16 +175,16 @@ class UniformFixedChunkSizeMultiClipSampler(FixedMultiClipSampler):
 
 def make_clip_sampler(sampling_type: str, **kwargs) -> ClipSampler:
     """
-    Constructs the clip samplers found in ``src.data.clip_sampler`` from the
+    Construct the clip samplers found in ``src.data.clip_sampler`` from the
     given arguments.
     Args:
-        sampling_type (str): choose clip sampler to return. It has five options:
+        sampling_type (str): spicify a particular clip sampler. There are five options:
             * fixed:
             * max:
             * random:
             * uniform_fixed_num_clips:
             * uniform_fixed_chunk_size:
-        *kwargs: the args to pass to the chosen clip sampler constructor.
+        *kwargs: the args pass to the specified clip sampler constructor.
     """
     if sampling_type == "fixed":
         return FixedMultiClipSampler(**kwargs)
