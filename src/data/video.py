@@ -26,8 +26,8 @@ def pad_last_frame(frames_path: List[str], clip_length: int = 8):
 
 class FrameVideo:
     """
-        FrameVideo is an abstractions for accessing clips based on their frame indices a video where each frame
-        is stored as an image. PathManager is used for frame image reading.
+        FrameVideo is an abstractions for accessing clips based on their frame indices in a video where each frame
+        is stored as an image. PathManager is used for frame reading.
 
     """
 
@@ -67,7 +67,7 @@ class FrameVideo:
                         clip_frame_indices: List[int],
                         ) -> Tuple[torch.Tensor, List]:
         """
-            Get one clip's frame tensors and its frame image paths from the clip indices
+            Get one clip's frame tensors and its frame paths from the clip indices
 
             Args:
                 clip_frame_indices (List[int]): the index of each frame in the clip
@@ -91,7 +91,7 @@ class FrameVideo:
 
     def get_multiple_clips(self, clips_frame_indices_list: List[List[int]]) -> Tuple[torch.Tensor, List[List]]:
         """
-            Get multiple clip's frame tensors and their frame image paths from the a list of clip indices
+            Get multiple clip's frame tensors and their paths from the a list of clip indices
 
             Args:
                 clips_frame_indices_list (List[List[int]]): the index of each frame in each clip
