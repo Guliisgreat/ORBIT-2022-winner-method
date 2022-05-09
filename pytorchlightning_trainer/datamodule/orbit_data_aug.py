@@ -8,9 +8,8 @@ from pytorchlightning_trainer.datamodule import ORBITDataModule
 
 class ORBITDataModuleDataAug(ORBITDataModule):
     """
-        Arguments
-            Three Splits: train, val, test
-            Default config file: pytorchlightning_trainer/conf/data/default.yaml
+        This datamodule class implements the ORBIT data pipeline using several common data augmentation techniques
+        to increase the diversity of episodes during training
     """
     def setup(self, stage: Optional[str] = None):
         if self.use_orbit_statistics:
@@ -22,7 +21,6 @@ class ORBITDataModuleDataAug(ORBITDataModule):
             ApplyTransformToKey(
                 key="support_image",
                 transform=torchvision.transforms.Compose([
-                    # torchvision.transforms.Resize(84),
                     torchvision.transforms.RandomHorizontalFlip(p=0.5),
                     torchvision.transforms.RandomVerticalFlip(p=0.5),
                     torchvision.transforms.RandomRotation(90),
@@ -55,7 +53,6 @@ class ORBITDataModuleDataAug(ORBITDataModule):
             ApplyTransformToKey(
                 key="support_image",
                 transform=torchvision.transforms.Compose([
-                    # torchvision.transforms.Resize(84),
                     Div255(),
                     stats
                 ])
@@ -63,7 +60,6 @@ class ORBITDataModuleDataAug(ORBITDataModule):
             ApplyTransformToKey(
                 key="query_image",
                 transform=torchvision.transforms.Compose([
-                    # torchvision.transforms.Resize(84),
                     Div255(),
                     stats
                 ])

@@ -6,32 +6,25 @@ import torchvision
 
 import hydra
 import omegaconf
-
 from omegaconf import DictConfig
-from pytorchlightning_trainer.utils.common import PROJECT_ROOT
 
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning import seed_everything
 
+from pytorchlightning_trainer.utils.common import PROJECT_ROOT
 from src.transforms import ApplyTransformToKey, Div255, MutuallyExclusiveLabel
 from src.data import ORBITUserCentricVideoFewShotClassification
 
 
 def custom_collate_fn(batch):
     """
-        Select the 1st episode from each meta batch
+        Select only the 1st episode from each meta batch
         TODO: Use distributed data parallel to process multiple episodes in each meta batch
     """
     return batch[0]
 
 
 class ORBITDataModule(LightningDataModule):
-    """
-        Arguments
-            Three Splits: train, val, test
-            Default config file: pytorchlightning_trainer/conf/data/default.yaml
-    """
-
     def __init__(self,
                  root: str = "/data02/datasets/ORBIT_microsoft",
                  use_orbit_statistics: bool = False,
@@ -39,6 +32,13 @@ class ORBITDataModule(LightningDataModule):
                  val_cfg: DictConfig = None,
                  test_cfg: DictConfig = None,
                  ):
+        """
+            Args:
+                root (int): the root data path of ORBIT dataset
+                use_orbit_statistics (bool): Use imagenet_dataset_statistics or orbit_dataset_statistics
+
+                Default config file: pytorchlightning_trainer/conf/data/default.yaml
+        """
         super().__init__()
         self.save_hyperparameters(logger=False)
 
@@ -105,7 +105,7 @@ class ORBITDataModule(LightningDataModule):
                 use_object_cluster_labels=self.train_cfg.use_object_cluster_labels,
                 mode="train")
 
-        self.test_datasets = \
+        self.val_datasets = \
             ORBITUserCentricVideoFewShotClassification(
                 data_path=self.val_cfg.root,
                 object_sampler=self.val_cfg.object_sampler,
@@ -177,8 +177,8 @@ def main(cfg: omegaconf.DictConfig):
         cfg.data.datamodule, _recursive_=False
     )
     datamodule.setup()
-    for idx, batch in enumerate(tqdm(datamodule.test_dataloader())):
-        if idx == 30:
+    for idx, batch in enumerate(tqdm(datamodule.train_dataloader())):
+        if idx == 100:
             break
 
 
