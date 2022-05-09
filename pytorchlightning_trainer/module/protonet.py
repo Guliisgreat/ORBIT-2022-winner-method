@@ -14,6 +14,14 @@ from src.data.orbit_few_shot_video_classification import \
 
 
 class ProtoNetWithLITE(pl.LightningModule):
+    """
+        This class implements the lightning_module of ProtoNet using LITE.
+        It re-implements the `class Learner` in original ORBIT codebase
+        <https://github.com/microsoft/ORBIT-Dataset/blob/master/single-step-learner.py>
+
+        The detail of ProtoNet can be found in https://papers.nips.cc/paper/2017/file/cb8da6767461f2812ae4290eac7cbc42-Paper.pdf
+        The detail of LITE can be found in https://proceedings.neurips.cc/paper/2021/file/cc1aa436277138f61cda703991069eaf-Paper.pdf
+    """
     def __init__(self,
                  pretrained_backbone_checkpoint_path: str,
                  backbone_network: str = "efficientnetb0",
@@ -28,11 +36,51 @@ class ProtoNetWithLITE(pl.LightningModule):
                  num_episodes_per_meta_batch: int = 16,
                  num_lite_samples: int = 8,
                  lr: float = 0.0001,
-                 lr_scheduler_step_milestone: float = 0.7,
-                 lr_scheduler_gamma: float = 0.5,
                  use_two_gpus: bool = False,
                  register_testing_supports: bool = True,
                  ):
+        """
+            Args:
+                pretrained_backbone_checkpoint_path (str): the full path of the backbone network's pretrained weight
+
+                backbone_network (str): the backbone network architecture
+
+                unfreeze_backbone (bool): whether to unfreeze backbone; E.g. metric-based FSL methods need to meta learn
+                    an encoder network, thus the backbone need to be unfrozen.
+
+                freeze_BN_layer (bool): whether to freeze Batch Normalization Layer during training
+
+                normalization_layer (str): the normalization layer used in the backbone.
+
+                use_adapt_features (bool): whether to use adapt features. Not used in ProtoNet
+
+                feature_adaptation_method (str): the method of feature adaptation. Not used in ProtoNet
+
+                classifier (str): the type of classifier head.
+
+                video_clip_length (int): the number of frames in the video clip
+
+                episode_subset_mini_batch_size (int): the number of clips in each episode used for once model forward
+                    and backward, because of the limited GPU memory (32G V100). For each episode, we split N clips into
+                    M subset_mini_batch, and each subset_mini_batch has 'num_episodes_per_meta_batch' clips. Then,
+                    we feed each subset_mini_batch to model and use `gradient accumulation` to calculate the meta
+                    gradient of the whole episode. Thus, the GPU memory usage will be decreased by M times.
+
+                num_episodes_per_meta_batch (int): the number of episodes used for one meta update. To decrease the
+                    variance of meta gradient and stable the meta training, we need to average the gradient of
+                    'num_episodes_per_meta_batch' episodes before each optimizer update (meta update)
+
+                num_lite_samples (int): the number of LITE samples used for approximating the true meta gradient
+
+                lr (float): the initial learning rate
+
+                use_two_gpus (bool): whether to use DataParallel to extract backbone features. Keep here to make a
+                    consistent API with original codebase, but will be removed in the future.
+
+                register_testing_supports (bool): whether to register prototypes (feature maps) into the Evaluator for
+                    post-analysis. Details can be found in `src.utils.evaluator`
+
+        """
         super().__init__()
 
         self.save_hyperparameters()
@@ -53,7 +101,6 @@ class ProtoNetWithLITE(pl.LightningModule):
         self.model._register_extra_parameters()
         self.model.set_test_mode(False)
 
-        # TODO: Try other normalization layers
         if normalization_layer != "basic":
             raise NotImplementedError("Please use Batch Norm in ProtoNet in default")
         self.pretrained_backbone_checkpoint_path = pretrained_backbone_checkpoint_path
@@ -64,18 +111,13 @@ class ProtoNetWithLITE(pl.LightningModule):
         self.use_two_gpus = use_two_gpus
         self.video_clip_length = video_clip_length
         self.lr = lr
-        self.lr_scheduler_step_milestone = lr_scheduler_step_milestone,
-        self.lr_scheduler_gamma = lr_scheduler_gamma,
         self.register_testing_supports = register_testing_supports
 
-        # TODO: Freeze BN layer??
         if self.freeze_BN_layer:
             self.model.set_test_mode(True)
             print("BN layers are frozen. Its parameters and statistics will be kept same with those from ImageNet ")
-        # Initialize evaluators (frame accuracy)
+
         self.train_metrics = torchmetrics.Accuracy()
-        # self.val_metrics = torchmetrics.Accuracy()
-        # unify evaluation calculations
         self.val_metrics = []
         self.episode_evaluator = None
 
@@ -88,9 +130,9 @@ class ProtoNetWithLITE(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
 
         support_multi_clips_frames = train_batch['support_frames']
-        support_multi_clips_labels = train_batch['support_targets']
+        support_multi_clips_labels = train_batch['support_labels']
         query_multi_clips_frames = train_batch['query_frames']
-        query_multi_clips_labels = train_batch['query_targets']
+        query_multi_clips_labels = train_batch['query_labels']
 
         episode_total_loss = 0
 
@@ -98,8 +140,6 @@ class ProtoNetWithLITE(pl.LightningModule):
         num_support_clips = support_multi_clips_frames.shape[0]
         query_batched_clips_loader = get_clip_loader((query_multi_clips_frames, query_multi_clips_labels),
                                                      self.episode_subset_mini_batch_size, with_labels=True)
-        # # Remove the last mini_batch, because its number of clips < episode_subset_mini_batch_size
-        # query_batched_clips_loader.pop(-1)
 
         for min_batched_query_clips_frames, mini_batched_query_labels in query_batched_clips_loader:
             self.model.personalise_with_lite(support_multi_clips_frames,
@@ -113,7 +153,7 @@ class ProtoNetWithLITE(pl.LightningModule):
             self.train_metrics.update(min_batch_query_prediction_logits, mini_batched_query_labels)
 
             self.manual_backward(batch_loss)
-            # reset task's params
+
             self.model.classifier.reset()
 
         self.log("train_loss_per_episode", episode_total_loss / len(query_batched_clips_loader), on_step=True,
@@ -121,7 +161,7 @@ class ProtoNetWithLITE(pl.LightningModule):
 
         self.lr_schedulers().step()
 
-        # accumulate gradients of each episode, and compute the average meta gradient of the meta batch
+        # Gradient Accumulation: Calculate the average meta gradient of the meta batch
         # num of episodes in each meta batch = 16 (default)
         if (batch_idx + 1) % self.num_episodes_per_meta_batch == 0:
             opt = self.optimizers()
@@ -139,36 +179,30 @@ class ProtoNetWithLITE(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
 
         support_clips_frames = val_batch['support_frames']
-        support_clips_labels = val_batch['support_targets']
+        support_clips_labels = val_batch['support_labels']
 
         self.model.personalise(support_clips_frames, support_clips_labels)
 
-        # loop through cached target videos for the current task
         total_loss = 0
-        for video_sequence_frames, video_sequence_label in zip(val_batch['query_frames'], val_batch['query_targets']):
+        for video_sequence_frames, video_sequence_label in zip(val_batch['query_frames'], val_batch['query_labels']):
             video_clips_frames = attach_frame_history(video_sequence_frames, self.video_clip_length)
-            video_logits, _ = self.model.predict(video_clips_frames)  # [num_frames, num_classes]
+            video_logits, _ = self.model.predict(video_clips_frames)
             num_frames = video_logits.shape[0]
-
             video_predictions = video_logits.argmax(dim=-1)
             self.val_metrics.append(
                 calculate_frame_accuracy(video_sequence_label.item(), video_predictions.cpu().tolist()))
-
             video_labels = video_sequence_label.expand(num_frames).to(device=video_logits.device)
             total_loss += F.cross_entropy(video_logits, video_labels, reduction="mean")
-            # self.val_metrics.update(video_logits, video_labels)
 
         self.model._reset()
-        self.log("val_loss", total_loss / len(val_batch['query_targets']), on_step=False, on_epoch=True)
+        self.log("val_loss", total_loss / len(val_batch['query_labels']), on_step=False, on_epoch=True)
 
     def on_validation_epoch_start(self) -> None:
         self.model.set_test_mode(True)
 
     def on_validation_epoch_end(self) -> None:
         avg_val_acc = sum(self.val_metrics) / len(self.val_metrics)
-        # self.log("val_acc", self.val_metrics.compute())
         self.log("val_acc", avg_val_acc)
-        # self.val_metrics.reset()
         self.val_metrics = []
 
         if not self.freeze_BN_layer:
@@ -184,18 +218,18 @@ class ProtoNetWithLITE(pl.LightningModule):
     def test_step(self, val_batch, batch_idx):
 
         support_clips_frames = val_batch['support_frames']
-        support_clips_labels = val_batch['support_targets']
+        support_clips_labels = val_batch['support_labels']
         support_clips_filenames = val_batch['support_frame_filenames']
 
         object_category_names = \
-            get_object_category_names_according_labels(val_batch['query_frame_filenames'], val_batch['query_targets'])
+            get_object_category_names_according_labels(val_batch['query_frame_filenames'], val_batch['query_labels'])
         self.episode_evaluator.register_object_category(object_category_names)
 
         self.model.personalise(support_clips_frames, support_clips_labels)
 
         # Register sampled support clips and their features for post-analysis (Optional)
         if self.register_testing_supports:
-            prototypes = self.model.classifier.param_dict['weight']  # [num_object, 1280]
+            prototypes = self.model.classifier.param_dict['weight']  # Shape = [num_object_category, 1280]
             if len(prototypes) != len(object_category_names):
                 raise ValueError("In the current episode, the number of prototypes "
                                  "is not equal to the number of object categories")
@@ -205,9 +239,9 @@ class ProtoNetWithLITE(pl.LightningModule):
                                                               clips_labels=support_clips_labels.cpu().numpy())
 
         for video_sequence_frames, video_sequence_label, video_frame_filenames in \
-                zip(val_batch['query_frames'], val_batch['query_targets'], val_batch['query_frame_filenames']):
+                zip(val_batch['query_frames'], val_batch['query_labels'], val_batch['query_frame_filenames']):
             video_clips_frames = attach_frame_history(video_sequence_frames, self.video_clip_length)
-            video_logits, video_features = self.model.predict(video_clips_frames)  # [num_frames, num_classes]
+            video_logits, video_features = self.model.predict(video_clips_frames)  # Shape = [num_frames, num_classes]
             video_prediction_scores = F.softmax(video_logits, dim=-1)
             video_predictions = video_logits.argmax(dim=-1)
             num_frames = video_logits.shape[0]
@@ -231,21 +265,16 @@ class ProtoNetWithLITE(pl.LightningModule):
     def configure_optimizers(self):
         feature_extractor_params = list(map(id, self.model.feature_extractor.parameters()))
         base_params = filter(lambda p: id(p) not in feature_extractor_params, self.model.parameters())
-        # TODO: Replace Adam with SGD
         # optimizer_fn = optimizers[optimizer_type]
         extractor_scale_factor = 0.1 if self.pretrained_backbone_checkpoint_path else 1.0
-        # optimizer = torch.optim.SGD([
-        #     {'params': base_params},
-        #     {'params': self.model.feature_extractor.parameters(), 'lr': self.lr * extractor_scale_factor}
-        # ], lr=self.lr, momentum=0.9)
-
         optimizer = torch.optim.Adam([
             {'params': base_params},
             {'params': self.model.feature_extractor.parameters(), 'lr': self.lr * extractor_scale_factor}
         ], lr=self.lr)
         print("initial learning rate = {}".format(self.lr))
 
-        total_num_train_episodes = len(self.trainer.datamodule.train_dataloader())
+        # TODO: Need tp remove hard codes here. Need to refactor into Hydra config
+        # LR_step_milestone = 0.7 * total_num_iteration; total_num_iterations = 22k
         milestone = int(0.7 * 22000)
 
         return {
@@ -253,8 +282,6 @@ class ProtoNetWithLITE(pl.LightningModule):
             "lr_scheduler": {
                 "scheduler": torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[milestone, ],
                                                                   gamma=0.5),
-                # If "monitor" references validation metrics, then "frequency" should be set to a
-                # multiple of "trainer.check_val_every_n_epoch".
             },
         }
-        # return optimizer
+

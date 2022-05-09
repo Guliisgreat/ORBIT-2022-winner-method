@@ -2,23 +2,23 @@ from pathlib import Path
 
 import torch
 from torch.nn import functional as F
-import pytorch_lightning as pl
 import torchmetrics
 
-from src.official_orbit.models.few_shot_recognisers import SingleStepFewShotRecogniser
-from src.official_orbit.utils.data import get_clip_loader, attach_frame_history
-from src.utils.evaluator import EpisodeEvaluator, FEATEpisodeEvaluator, convert_results_in_submission_format, \
-    compute_average_frame_accuracy_across_videos, calculate_frame_accuracy
+from src.official_orbit.utils.data import attach_frame_history
+from src.utils.evaluator import FEATEpisodeEvaluator
 from src.data.orbit_few_shot_video_classification import \
     get_object_category_names_according_labels
 from pytorchlightning_trainer.module.protonet import ProtoNetWithLITE
 from src.utils.missing_object_detector import filter_support_clips_without_object
 
 
-
 class ProtoNetWithLITEVideoPost(ProtoNetWithLITE):
+    """
+        This class implements ProtoNet using LITE, also integrated with the video support clips selection
+        using Canny Edge Detector during testing.
+
+    """
     def on_test_start(self) -> None:
-        # Hard code; To avoid direct modifications on official_orbit.models.few_shot_recognizers.py
         self.model._set_device(self.device)
         self.model.set_test_mode(True)
         self.episode_evaluator = FEATEpisodeEvaluator(
@@ -26,30 +26,28 @@ class ProtoNetWithLITEVideoPost(ProtoNetWithLITE):
 
     def test_step(self, val_batch, batch_idx):
         support_clips_frames = val_batch['support_frames']
-        support_clips_labels = val_batch['support_targets']
+        support_clips_labels = val_batch['support_labels']
         support_clips_filenames = val_batch['support_frame_filenames']
 
-        # val_batch['raw_support_frames'] = val_batch['raw_support_frames'].cpu()
-
         object_category_names = \
-            get_object_category_names_according_labels(val_batch['query_frame_filenames'], val_batch['query_targets'])
+            get_object_category_names_according_labels(val_batch['query_frame_filenames'], val_batch['query_labels'])
         self.episode_evaluator.register_object_category(object_category_names)
 
-        # # Apply support clips filter
+        # Filter non-object-present support clips: apply the edge detector to identify which frame has
+        # non-object-present issue, and remove the related support clips
+        if "raw_support_frames" not in val_batch:
+            raise ValueError("The edge detector must take inputs raw RGB frames, but not included in the dataloader.")
         num_total_support_clips = len(support_clips_frames)
         support_clips_frames, support_clips_labels, support_clips_filenames = \
             filter_support_clips_without_object(val_batch["raw_support_frames"], support_clips_frames, support_clips_labels, support_clips_filenames)
         num_valid_support_clips = len(support_clips_frames)
-        print("In user: {}, valid_support_clips / total_support_clips = {} / {} = {}".
+        print("In user: {}, num_valid_support_clips / total_num_support_clips = {} / {} = {}".
               format(val_batch["user_id"], num_valid_support_clips, num_total_support_clips, num_valid_support_clips / num_total_support_clips))
 
         self.model.personalise(support_clips_frames, support_clips_labels)
 
         # Register sampled support clips and their features for post-analysis (Optional)
         if self.register_testing_supports:
-            # prototypes = self.model.classifier.param_dict['weight']  # [num_object, 1280]
-            original_prototypes = torch.cat(list(self.model.classifier.original_class_rep_dict.values()), dim=0)
-            self.episode_evaluator.register_original_prototypes(original_prototypes.cpu().numpy())
             prototypes = torch.cat(list(self.model.classifier.adapted_class_rep_dict.values()), dim=0)
             if len(prototypes) != len(object_category_names):
                 raise ValueError("In the current episode, the number of prototypes "
@@ -59,17 +57,12 @@ class ProtoNetWithLITEVideoPost(ProtoNetWithLITE):
                                                               clips_filenames=support_clips_filenames,
                                                               clips_labels=support_clips_labels.cpu().numpy())
 
-        # for video_sequence_frames, video_sequence_raw_frames, video_sequence_label, video_frame_filenames in \
-        #         zip(val_batch['query_frames'], val_batch['raw_query_frames'], val_batch['query_targets'], val_batch['query_frame_filenames']):
-        for video_sequence_frames,  video_sequence_label, video_frame_filenames in zip(val_batch['query_frames'], val_batch['query_targets'],val_batch['query_frame_filenames']):
+        for video_sequence_frames,  video_sequence_label, video_frame_filenames in \
+                zip(val_batch['query_frames'], val_batch['query_labels'],val_batch['query_frame_filenames']):
             video_clips_frames = attach_frame_history(video_sequence_frames, self.video_clip_length)
             video_logits, video_features = self.model.predict(video_clips_frames)  # [num_frames, num_classes]
             video_prediction_scores = F.softmax(video_logits, dim=-1)
             video_predictions = video_logits.argmax(dim=-1).cpu()
-
-            # Transform invalid frame predictions
-            # video_predictions = transform_invalid_frame_predictions(video_predictions, video_sequence_raw_frames, history_length=8)
-
             num_frames = video_logits.shape[0]
             video_labels = video_sequence_label.expand(num_frames).cpu()
             acc = torchmetrics.functional.accuracy(video_predictions, video_labels)
