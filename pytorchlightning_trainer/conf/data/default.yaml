@@ -20,8 +20,8 @@ datamodule:
     video_clip_length: 8
     max_num_clips_per_video: 10
     use_object_cluster_labels: False
-    num_threads: 8
-    num_workers: 2
+    num_threads: 16
+    num_workers: 8
     batch_size: 1
 
   val_cfg:
@@ -39,8 +39,8 @@ datamodule:
     video_clip_length: 8
     max_num_clips_per_video: 10
     use_object_cluster_labels: False
-    num_threads: 8
-    num_workers: 2
+    num_threads: 16
+    num_workers: 8
     batch_size: 1
 
   test_cfg:
@@ -58,6 +58,6 @@ datamodule:
     video_clip_length: 8
     max_num_clips_per_video: 10
     use_object_cluster_labels: False
-    num_threads: 8
-    num_workers: 2
+    num_threads: 16
+    num_workers: 8
     batch_size: 1

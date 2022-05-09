@@ -60,5 +60,5 @@ datamodule:
     max_num_clips_per_video: 10
     use_object_cluster_labels: False
     num_threads: 16
-    num_workers: 0
+    num_workers: 2
     batch_size: 1
