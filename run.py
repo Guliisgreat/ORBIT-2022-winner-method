@@ -73,6 +73,9 @@ def run(cfg: DictConfig) -> None:
 
     :param cfg: run configuration, defined by Hydra in /conf
     """
+    hydra.utils.log.info("###################### Config ####################")
+    hydra.utils.log.info(OmegaConf.to_yaml(cfg))
+    hydra.utils.log.info("############################################################")
 
     if cfg.train.deterministic:
         seed_everything(cfg.train.random_seed)
@@ -124,6 +127,7 @@ def run(cfg: DictConfig) -> None:
             hydra.utils.log.info("create experiment log directory {}".format(exp_folder))
 
         hydra.utils.log.info(f"Instantiating <TensorboardLogger>")
+        hydra.utils.log.info(os.path.join(PROJECT_ROOT, cfg.logging.tensorboard.logger_dir))
         tb_logger = TensorBoardLogger(
             save_dir=os.path.join(PROJECT_ROOT, cfg.logging.tensorboard.logger_dir),
             name=cfg.train.exp_name,
