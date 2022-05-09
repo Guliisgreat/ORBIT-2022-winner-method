@@ -74,6 +74,8 @@ Experimental results on ORBIT datasets with EfficienNet_B0 backbone and images w
 ## Prerequisites
 
 
+**step1: Installation**
+
 The following packages are required to run the scripts:
 - python 3.8
 - pytorch_lightning
@@ -87,21 +89,30 @@ The following packages are required to run the scripts:
 conda env create -f environment.yml
 ```
 
-Set environment variables 
+**step 2: Set environment variables** 
 ```shell
 cd your_project_folder_path
 export PROJECT_ROOT= your_project_folder_path
 export PYTHONPATH= your_project_folder_path
 ```
 
-Please download the dataset from [ORBIT benchmark](https://github.com/microsoft/ORBIT-Dataset)
-```shell
+**step 3: Download ORBIT dataset**
+
+Please download the dataset from [ORBIT benchmark](https://github.com/microsoft/ORBIT-Dataset) into the folder `your_orbit_dataset_folder_path`
+
+Check that the folder includes train, validation, test sets of video frame images and their annotations, following the format: 
+```
 /ORBIT_microsoft
 -- train
 -- test
 -- validation
 -- annotation 
 ```
+Change the data root path, `data.train_cfg.root = your_orbit_dataset_folder_path`, `data.val_cfg.root = your_orbit_dataset_folder_path` and
+`data.test_cfg.root = your_orbit_dataset_folder_path`.
+
+**step 4: Download checkpoints to reproduce our best testing result**
+
 To testing our best result, please download our best model checkpoint from [FEAT_data_aug](https://drive.google.com/drive/folders/1BhxylCNmAt6dQ-nHXw4Orv62kBiZkHAH?usp=sharing) into the folder `checkpoints`
 
 Then, please change the `load_pretrained` in `pytorchlightning_trainer/cfg/train/with_lite_test`.[here](https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/ab9c237896482c75861179588e7ec0a2afb7acbe/pytorchlightning_trainer/conf/train/with_lite_test.yaml#L19)
@@ -114,7 +125,7 @@ To reproduce our experiments, please use **run.py**. There are four parts in the
    - `src/data`: our re-implemented data pipeline on ORBIT dataset
    - `src/tranform`: transform functions commonly used in episodic learning (meta learning) 
    - `src/learner`: added few shot learning methods (e.g. FEAT)
- - `pytorchlightning_trainer`: we follow the [pytorchlightning](https://www.pytorchlightning.ai/)-hydra template to make codes and experiments structured, readable and reproducible. 
+ - `pytorchlightning_trainer`: we follow the **_pytorchlightning-hydra_** template to make codes and experiments **structured**, **readable** and **reproducible**. 
 [why use lightning-hydra](https://github.com/ashleve/lightning-hydra-template)
    - `pytorchlightning_trainer/callbacks`:  Lightning callbacks
    - `pytorchlightning_trainer/datamodule`: Lightning datamodules
@@ -132,19 +143,81 @@ python run.py
 data=default_use_data_aug 
 model=feat_with_lite 
 train=with_lite_train
-train.exp_name="reproduce_our_training_result"
+train.exp_name="reproduce_our_best_model_training_with_data_augment"
 ```
+Then, you can find tensorboard logs and checkpoints in `your_project_folder_path//logs/tb_logs/"reproduce_our_best_model_training_with_data_augment/version_x`
 
-### Testing with our re-implemented data pipeline and evaluate with our re-implemented evaluation toolbox
+### Testing with our re-implemented data pipeline
 ```shell
 python run.py
 data=test_support_sampler_uniform_fixed_chunk_size_10 
 model=feat_with_lite_video_post 
 train=with_lite_test 
-train.exp_name="reproduce_our_testing_result"
+train.exp_name="reproduce_our_leaderboard_testing_result"
 ```
+Then, you can find testing results with submission format in `your_project_folder_path/logs/tb_logs/reproduce_our_leaderboard_testing_result/testing_per_video_results/orbit_submission.json`
 
+## Extra contributions to code quality
+### Refactor the data pipeline
+We refactor and re-implement the data pipeline of the original ORBIT codebase to encourage modularity, compatibility 
+and performance 
+1. **Modularity**
+   - We decouple the logic of object category sampling, video sequence (instance) sampling, video clip sampling, 
+   video frame image loading and tensor preparing from one deeper class `data.datasets.ORBITDataset` into 
+   multiple independent shallow classes.
+     - `src.data.sampler`: To sample object categories from each user, and video instances from each object category 
+     - `src.clip_sampler`: To sample clips from each video instance 
+     - `src.video`: To load video frame images using multi threads
+     - `src.orbit_few_shot_video_classification`: To assemble above components and prepare tensors 
+   - It provides independent components that are plug-and-play and ready to  mix-and-match for any research or 
+   production use case. For example, we replace the original random clip sampler 
+   `src.clip_sampler.RandomMultiClipSampler` with the uniform version 
+   `src.clip_sampler.UniformFixedChunkSizeMultiClipSampler`and enable to build high quality prototypes in testing.
+     
+2. **Compatibility**
+   - It is designed to be interoperable with other Pytorch standard domain specific libraries (torchvision), and
+   their highly-optimized modules and functions can be reused in the ORBIT dataset 
+   - Its API is kept similar with common usage in standard supervised learning: `torch.utils.data.Dataset` to 
+   prepare each mini-batch of episodes, and `torch.utils.data.DataLoader` to handle batching, shuffling and 
+   prefetching with multi CPU workers 
 
+4. **Performance**
+   - The data pipeline of the original codebase cannot maintain the GPU utility 100%, and thus the data preparation
+   becomes the bottleneck.
+   - To optimize I/O, we introduce the multithreading to hide the latency of loading hundreds of images from disk 
+   in each episode. The speed benchmark is in the following tables
+   - Testing Machine
+     - CPU: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz, 72 cores
+     - GPU: Nvidia V-100 32G, 1 card 
+
+#### Testing speed
+We compare the speed of data pipelines, which count the total time of preparing 300 video sequence tensors 
+from 17 users in test set.
+* The data preparation consists of sampling objects, sampling instances for both query and support sets, sampling support 
+video clips, loading clip frame images and converting image arrays into tensors.
+
+|                         | num workers | num threads | total time (s) |
+|-------------------------|-------------|-------------|----------------|
+| original ORBIT codebase | 4           | 1           | 233            |
+| ours                    | 4           | 4           | 201 (1.15x)    |
+| ours                    | 4           | 16          | 152 (1.53x)    |
+| ours                    | 8           | 16          | 86  (2.70x)    |
+
+#### Training speed
+We compare the speed of data pipelines, which average the time after preparing tenors of 100 episodes in train set.
+
+|                         | num workers | num threads | time per episode (s) |
+|-------------------------|-------------|-------------|----------------------|
+| original ORBIT codebase | 4           | 1           | 2.61                 |
+| ours                    | 4           | 4           | 2.20 (1.18x)         |
+| ours                    | 4           | 16          | 1.08 (2.41x)         |
+| ours                    | 8           | 16          | 0.94 (2.77x)         |
+
+### To Do 
+1. To accelerate and parallelize few-shot learners' training, we will replace original gradient accumulation 
+techniques with `torch.distributed` package using multiple GPUs.
+2. We will modularize the original class of few-shot-learner: backbone network, normalization layer, adaptation module, 
+LITE usage, classifier.  
 
 
 ## Acknowledgment
