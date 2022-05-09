@@ -3,13 +3,11 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import collections
-
 from einops import rearrange
 
 from src.official_orbit.models.classifiers import HeadClassifier
 
 
-# Copy from https://github.com/Sha-Lab/FEAT/blob/47bdc7c1672e00b027c67469d0291e7502918950/model/models/feat.py
 class ScaledDotProductAttention(nn.Module):
     ''' Scaled Dot-Product Attention '''
 
@@ -30,7 +28,11 @@ class ScaledDotProductAttention(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    ''' Multi-Head Attention module '''
+    """
+        Multi-Head Attention module
+
+        Copy from https://github.com/Sha-Lab/FEAT/blob/47bdc7c1672e00b027c67469d0291e7502918950/model/models/feat.py
+    """
 
     def __init__(self, n_head, d_model, d_k, d_v, dropout=0.1):
         super().__init__()
@@ -79,11 +81,17 @@ class MultiHeadAttention(nn.Module):
 
 
 class FEAT(HeadClassifier):
+    """
+        Creates instance of FEAT.
+
+        FEAT is a metric-based few shot learning method, where a transformer encoder block, as the embedding adaptation
+        module, is applied on prototypes to enable learn more discriminative representations of the specific episode.
+
+        Details in Few-Shot Learning via Embedding Adaptation with Set-to-Set Functions, CVPR 2020
+        <https://openaccess.thecvf.com/content_CVPR_2020/papers/Ye_Few-Shot_Learning_via_Embedding_Adaptation_With_Set-to-Set_Functions_CVPR_2020_paper.pdf>
+
+    """
     def __init__(self, hidden_dim=1280, temperature=32):
-        """
-        Creates instance of PrototypicalClassifier.
-        :return: Nothing.
-        """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.temperature = temperature
@@ -91,6 +99,9 @@ class FEAT(HeadClassifier):
         self.hidden_dim = hidden_dim
         self.multi_head_self_attention = MultiHeadAttention(1, self.hidden_dim, self.hidden_dim, self.hidden_dim,
                                                             dropout=0.5)
+
+        self.original_class_rep_dict = None
+        self.adapted_class_rep_dict = None
 
     def apply_embedding_adaptation(self, class_rep_dict: collections.OrderedDict):
         prototypes = torch.cat(list(class_rep_dict.values()))
