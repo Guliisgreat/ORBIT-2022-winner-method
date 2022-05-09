@@ -14,7 +14,7 @@ pl_trainer:
   precision: 32
   num_sanity_val_steps: 0
 
-#load_pretrained: "/home/ligu/projects/orbit_challenge_2022_refactor/logs/tb_logs/train_feat_data_aug/version_0/checkpoints/epoch=0-step=10999.ckpt"
+load_pretrained: "/home/ligu/projects/orbit_challenge_2022_refactor/logs/tb_logs/train_feat_data_aug/version_0/checkpoints/epoch=0-step=10999.ckpt"
 # https://drive.google.com/file/d/1ptYa-Nv52GDSSH6-3JECZIPFdUG-hOWS/view?usp=sharing
-load_pretrained: "your_project_folder/checkpoints/epoch=0-step=10999.ckpt"
+#load_pretrained: "your_project_folder/checkpoints/epoch=0-step=10999.ckpt"
 
