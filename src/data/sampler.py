@@ -124,11 +124,11 @@ def make_sampler(sampling_type: str,
                  min_num_samples: int = 1,
                  max_num_samples: Optional[int] = None) -> Sampler:
     """
-    Constructs the samplers found in ``src.data.sampler`` from the
+    Build the samplers in ``src.data.sampler`` by the
     given arguments.
 
     Args:
-        sampling_type (str): choose  sampler to return. It has three options:
+        sampling_type (str): specify a sampler to return. There are three options:
             * fixed: constructs and return ``FixedSampler``
             * random: construct and return ``RandomSampler``
             * max: construct and return ``MaxSampler``
