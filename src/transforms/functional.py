@@ -8,12 +8,21 @@ def mutually_exclusive_label(
         shuffle_ordered_label: bool = False,
 ) -> Tuple[torch.LongTensor, torch.LongTensor]:
     """
-    Convert the globel labels across the dataset into the each sampled episode's local label
-    Attention: local labels need to follow the ascending order of global labels
+        Convert the global labels in the dataset into the local label in each episode
 
+        E.g. A 5-way episode whose labels are [89, 12, 118, 221, 435, 89, 12, 118, 221, 435]
+             --> episode targets [0, 1, 2, 3, 4, 0, 1, 2, 3, 4] (shuffle_ordered_label = False)
+             --> episode targets [0, 4, 3, 0, 2, 3, 1, 4, 2, 1] (shuffle_ordered_label = True)
 
-    E.g. A 5-way episode whose labels are [89, 12, 118, 221, 435, 89, 12, 118, 221, 435]
-         --> episode targets [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+        Args:
+            episode_global_support_labels (torch.LongTensor): the global label in the dataset (the support set)
+            episode_global_query_labels (torch.LongTensor): the global label in the dataset (the query set)
+            shuffle_ordered_label (bool): whether to shuffle the order of local labels in the episode
+
+        Returns:
+            support_local_labels (torch.LongTensor): the local label in the episode (the support set)
+            query_local_labels (torch.LongTensor): the local label in the episode (the query set)
+
 
     """
     device = episode_global_support_labels.device
@@ -38,8 +47,10 @@ def mutually_exclusive_label(
 
     support_local_labels = map_global_to_local(episode_global_support_labels)
     query_local_labels = map_global_to_local(episode_global_query_labels)
+    support_local_labels = torch.LongTensor(support_local_labels, device=device)
+    query_local_labels = torch.LongTensor(query_local_labels, device=device)
 
-    return torch.LongTensor(support_local_labels, device=device), torch.LongTensor(query_local_labels, device=device)
+    return support_local_labels, query_local_labels
 
 
 def div_255(x: torch.Tensor) -> torch.Tensor:

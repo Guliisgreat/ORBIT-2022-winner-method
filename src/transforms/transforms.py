@@ -7,16 +7,33 @@ from src.transforms.functional import div_255, mutually_exclusive_label
 
 class ApplyTransformToKey:
     """
-    Applies transform_moduel to key of dictionary input.
-    Args:
-        key (str): the dictionary key the transform_moduel is applied to
-        transform (callable): the transform_moduel that is applied
-    # Example:
-    #     >>>   transforms.ApplyTransformToKey(
-    #     >>>       key='image',
-    #     >>>       transform_moduel=UniformTemporalSubsample(num_video_samples),
-    #     >>>   )
-    # """
+        Apply transform modules to key of dictionary input.
+
+        Args:
+            key (str): the dictionary key the transform_moduel is applied to
+            transform (callable): the transform_moduel that is applied
+
+        Example:
+            transform = torchvision.transforms.Compose([
+                ApplyTransformToKey(key="support_image",
+                    transform=torchvision.transforms.Compose([
+                        Div255(),
+                        torchvision.transforms.Normalize(mean=(0.500, 0.436, 0.396), std=(0.145, 0.143, 0.138))
+                    ])
+                ),
+                ApplyTransformToKey(key="query_image",
+                    transform=torchvision.transforms.Compose([
+                        Div255(),
+                        torchvision.transforms.Normalize(mean=(0.500, 0.436, 0.396), std=(0.145, 0.143, 0.138))
+                    ])
+                ),
+                ApplyTransformToKey(key="episode_label",
+                    transform=torchvision.transforms.Compose([
+                        MutuallyExclusiveLabel(shuffle_ordered_label=True),
+                    ])
+                ),
+            ])
+    """
 
     def __init__(self, key: str, transform: Callable):
         self._key = key
@@ -29,7 +46,7 @@ class ApplyTransformToKey:
 
 class MutuallyExclusiveLabel(torch.nn.Module):
     """
-
+    ``nn.Module`` wrapper for ``src.transforms.functional.mutually_exclusive_label``.
     """
 
     def __init__(self, shuffle_ordered_label):
@@ -50,7 +67,7 @@ class MutuallyExclusiveLabel(torch.nn.Module):
 
 class Div255(torch.nn.Module):
     """
-    ``nn.Module`` wrapper for ``pytorchvideo.transforms.functional.div_255``.
+    ``nn.Module`` wrapper for ``src.transforms.functional.div_255``.
     """
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
