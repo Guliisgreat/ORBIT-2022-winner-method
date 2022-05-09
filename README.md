@@ -103,13 +103,26 @@ Please download the dataset from [ORBIT benchmark](https://github.com/microsoft/
 Check that the folder includes train, validation, test sets of video frame images and their annotations, following the format: 
 ```
 /ORBIT_microsoft
--- train
--- test
--- validation
--- annotation 
+|
+|--- train/
+      |--- P100/
+      |--- exercise bench/
+      |------------clean/
+      |---------------P100--exercise-bench--clean--4ChvjQ3Xzidvq0mCI9lperemxb6D6tCyQS-BG6LS72A/
+      |------------------ P100--exercise-bench--clean--4ChvjQ3Xzidvq0mCI9lperemxb6D6tCyQS-BG6LS72A-00001.jpg
+      |------------------ P100--exercise-bench--clean--4ChvjQ3Xzidvq0mCI9lperemxb6D6tCyQS-BG6LS72A-00002.jpg
+      ...
+      
+|--- validation/
+|--- test/
+|--- annotation/ 
+      |------ orbit_extra_annotations/
+      |------ orbit_train_object_cluster_labels.json
+      |------ orbit_validation_object_cluster_labels.json
+      |------ orbit_test_object_cluster_labels.json
 ```
 Change the data root path, `data.train_cfg.root = your_orbit_dataset_folder_path`, `data.val_cfg.root = your_orbit_dataset_folder_path` and
-`data.test_cfg.root = your_orbit_dataset_folder_path`.
+`data.test_cfg.root = your_orbit_dataset_folder_path`. [example](https://github.com/Guliisgreat/ORBIT_Challenge_2022_Team_canada_goose/blob/e004c1265681b41ab03b5a249f869c999d3e3249/pytorchlightning_trainer/conf/data/default.yaml#L7)
 
 **step 4: Download checkpoints to reproduce our best testing result**
 
