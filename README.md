@@ -158,7 +158,7 @@ model=feat_with_lite
 train=with_lite_train
 train.exp_name="reproduce_our_best_model_training_with_data_augment"
 ```
-Then, you can find tensorboard logs and checkpoints in `your_project_folder_path//logs/tb_logs/"reproduce_our_best_model_training_with_data_augment/version_x`
+Then, you can find tensorboard logs and checkpoints in `your_project_folder_path/logs/tb_logs/"reproduce_our_best_model_training_with_data_augment/version_x`
 
 ### Testing with our re-implemented data pipeline
 ```shell
