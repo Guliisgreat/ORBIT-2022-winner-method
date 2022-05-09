@@ -221,8 +221,8 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
         stored as image frames.
 
         This dataset handles randomly generating episodes via sampling object categories from each user and sampling
-        support and query video instances from each object category. Also, this object handles sampling clips from
-        each video sequence and loading clip frames. All io is done through :code:`iopath.common.file_io.PathManager`
+        support and query video instances from each object category. Also, this object is designed to sample clips from
+        each video sequence and load clip frames. All io is done through :code:`iopath.common.file_io.PathManager`
 
     """
 
@@ -288,12 +288,12 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
 
             Each episode has a support set, a query set, a user_id and a list of category names.
 
-            In training, both the support set and the query set have multiple sampled video clips, and each of
-            the clip has a 4-D clip_tensor, a label, image filenames and annotation of each frame
+            In training, both the support set and the query set have multiple sampled video clips. Each 
+            clip has a 4-D clip_tensor, a label, image filenames and the annotation of each frame.
 
             In testing, the support set includes same elements, but the query set includes a list of
             length-invariance video sequences. Each video sequence has  a 4-D video_tensor, a label, image
-            filenames and annotation of each frame
+            filenames and the annotation of each frame.
 
             Returns:
                 A dictionary with the following format.
@@ -555,13 +555,13 @@ def ORBITUserCentricVideoFewShotClassification(
                 sequence; In testing, "max" is strictly required to make sure all frames from each query videos are
                 sampled.
 
-            max_num_clips_per_video (int):  the maximum number of clips sampled from each video sequence
+            max_num_clips_per_video (int):  the maximum number of clips sampled from each video sequence.
 
-            max_num_sampled_frames_per_video (int): the maximum number of first frames used for sampling clips
+            max_num_sampled_frames_per_video (int): the maximum number of first frames used for sampling clips.
 
             video_subsample_factor (int): Factor to subsample video frames before sampling clips.
 
-            video_clip_length (int): the number of frames in each sampled video clip
+            video_clip_length (int): the number of frames in each sampled video clip.
 
             use_object_cluster_labels (bool): If True, use object cluster labels, otherwise use raw object labels.
 
