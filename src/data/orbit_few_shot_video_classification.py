@@ -4,9 +4,9 @@ import os
 import json
 import random
 from pathlib import Path
+import fnmatch
 import re
 import numpy as np
-import pandas as pd
 from typing import Optional, Callable, Any, Dict, List, Tuple
 from dataclasses import dataclass
 
@@ -77,19 +77,23 @@ def get_object_category_names_according_labels(videos_filenames, labels):
 
 
 def prepare_ORBIT_dataset(root_data_path: str,
-                          mode: str = "train"):
+                          mode: str = "train") -> Dict:
     """
+        Prepare ORBIT dataset metadata and save into one dictionary, which can be easily accessed by downstream
+        torch.utils.data.Dataset
+
         Arguments:
             root_data_path (str): the root folder of orbit dataset
             mode (str): train, val, test
         Return:
-            video_database (pandas.DataFrame) Each row represents a video instance including 6 attributes:
-                                "video_name, user, category_name, category_label, category_cluster_label, video_type, filename_fullpath"
-            user_name
-                * object_name
-                    * video_type (clean or clutter)
-                        * video_name
-                            * user_name, category_name, category_label, category_cluster_label, video_type, filename_fullpath"
+            database (Nested Dict): the metadata of ORBIT dataset
+                Format:
+                user_name
+                    * object_name
+                        * video_type (clean or clutter)
+                            * video_name
+                                * user_name, category_name, category_label, category_cluster_label,
+                                  video_type, filename_fullpath, annotation_fullpath
     """
     if not os.path.isdir(os.path.join(root_data_path, mode)):
         raise RuntimeError(
@@ -117,12 +121,11 @@ def prepare_ORBIT_dataset(root_data_path: str,
     video_database = {}
     data_path = os.path.join(root_data_path, mode)
 
-    cnt_user = 0
     cnt_video = 0
-    for user_name in user_names:
+    logger.info("Prepare ORBIT dataset metadata... of {}_set".format(mode))
+    for user_name in tqdm(user_names):
         video_database[user_name] = {}
         object_names = sorted(os.listdir(os.path.join(data_path, user_name)))
-        cnt_user += 1
         for object_name in object_names:
             video_database[user_name][object_name] = {}
             video_types = os.listdir(os.path.join(data_path, user_name, object_name))
@@ -135,10 +138,6 @@ def prepare_ORBIT_dataset(root_data_path: str,
                 for video_name in video_names:
                     video_frame_folder_fullpath = os.path.join(data_path, user_name, object_name, video_type,
                                                                video_name)
-                    num_frames = len(list(Path(video_frame_folder_fullpath).rglob("*.jpg")))
-                    if num_frames == 0:
-                        logger.warning("There is no any single frame (*.jpg) in video {}".format(video_name))
-                        continue
                     video_metadata = {"user_name": user_name,
                                       "video_name": video_name,
                                       "category_name": object_name,
@@ -153,17 +152,18 @@ def prepare_ORBIT_dataset(root_data_path: str,
                     video_database[user_name][object_name][video_type].append(video_metadata)
                     cnt_video += 1
     logger.info("Total number of video instances = {} in mode {}".format(cnt_video, mode))
+    logger.info("Done.")
     return video_database
 
 
 class ORBITDatasetVideoInstanceSampler:
     """
-        How to sample support instances and query instance from each object in ORBIT User-Centric Dataset?
+        Given one object category and its video instance, we need to sample non-overlapped support instances
+        and query instance from that object to construct an episode
 
         Requirements:
-            1. Make sure there is at least one sampled query instance from each object
-            2. Make sure there are five sampled support instance from each object at minimum except
-               condition 1 cannot be satisfied
+            1. At least one query instance sampled from each object
+            2. At minimum 5 support instance sampled from each object
 
     """
     MIN_NUM_SUPPORT_INSTANCE = 5
@@ -217,7 +217,13 @@ class ORBITDatasetVideoInstanceSampler:
 
 class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
     """
-        User-centric Episode: all object classes from one sampled user
+        Few shot video classification dataset for `ORBIT <https://github.com/microsoft/ORBIT-Dataset>`
+        stored as image frames.
+
+        This dataset handles randomly generating episodes via sampling object categories from each user and sampling
+        support and query video instances from each object category. Also, this object handles sampling clips from
+        each video sequence and loading clip frames. All io is done through :code:`iopath.common.file_io.PathManager`
+
     """
 
     def __init__(
@@ -235,19 +241,16 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
 
     ) -> None:
         """
-        Args:
-            video_database (Dict[str, Dict]):
-                user_name
-                    * object_name
-                        * video_type (clean or clutter)
-                            * video_name
-                                * user_name, category_name, category_label, category_cluster_label, video_type, filename_fullpath"
-            category_sampler (Optional[Sampler]):
-            video_instance_sampler (Optional[Sampler]):
-            video_clip_sampler
-            totol_num_episodes: the number of episodes will be generated in each epoch
-            transform (Callable): transform_moduel module in "torchvison.transform_moduel"
-
+            Args:
+                video_database (Dict[str, Dict]): the metadata of ORBIT dataset
+                category_sampler (Optional[Sampler]): the sampler for object category
+                video_instance_sampler (ORBITDatasetVideoInstanceSampler): the sampler for support and query video instances
+                support_video_clip_sampler (ClipSampler): the sampler for support video clips
+                query_video_clip_sampler (ClipSampler): the sampler for query video clips
+                num_episodes_per_user: the number of randomly generated episodes for each user
+                transform (Callable): transform functions and modules; Compatible with torchvision
+                mode (str): train, validation, test
+                num_threads (int): the number of CPU threads used to accelerate I/O; Load images (*.jpg) from the disk
         """
 
         self.video_database = video_database
@@ -269,7 +272,7 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
         logger.info(
             '{} users in total, and each user has {} episodes.'.format(num_users, self.num_episode_per_user))
 
-        logger.info("Start Sequence mode")
+        logger.info("Start randomly generate episodes in {}set".format(self.mode))
         self.episodes = []
         for user_name in tqdm(user_names):
             category_names = list(video_database[user_name].keys())
@@ -281,8 +284,36 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, item) -> Dict:
         """
-            TRAIN MODE:
-            TEST MODE (TESTSET,VALSET):
+            Retrieves the next episode based on the video clip sampling strategy.
+
+            Each episode has a support set, a query set, a user_id and a list of category names.
+
+            In training, both the support set and the query set have multiple sampled video clips, and each of
+            the clip has a 4-D clip_tensor, a label, image filenames and annotation of each frame
+
+            In testing, the support set includes same elements, but the query set includes a list of
+            length-invariance video sequences. Each video sequence has  a 4-D video_tensor, a label, image
+            filenames and annotation of each frame
+
+            Returns:
+                A dictionary with the following format.
+
+                .. code-block:: text
+                    N = number of clips or videos; T = clip_length or video_length; C = 3, H = W = 224
+
+                    {
+                        'support_frames': <torch.FloatTensor>,  # Shape: (N, T, C, H, W)
+                        'support_labels': <torch.LongTensor>,   # Shape: (N, )
+                        'support_frame_filenames': <List[List[str]]>
+                        'support_annotations': <List[List[Dict]]>
+                        'query_frames': In train, <torch.FloatTensor>,  # Shape: (N, T, C, H, W)
+                                        In test,  <List[torch.FloatTensor], # Shape: List[ (T, C, H, W)]
+                        'query_targets": <torch.LongTensor>,   # Shape: (N, )
+                        'query_frame_filenames': <List[List[str]]>
+                        'query_annotations': <List[List[Dict]]>
+                        'category_names': <List[str]>
+                        "user_id": <str>
+                      }
         """
         episode = self.episodes[item]
         # STEP 1: Sample multiple clips from each video
@@ -309,10 +340,8 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
             self.__shuffle_clips_indices(query_frames, query_labels, query_frame_filenames, query_annotations)
 
         raw_support_frames = copy.deepcopy(support_frames)
-        raw_query_frames = copy.deepcopy(query_frames)
 
         # STEP 3: Apply Transform
-        # TODO: Add video level augmentation techniques
         if self.transform:
             support_frames = rearrange(support_frames, "n t c h w  ->  (n t) c h w")
             query_frames = rearrange(query_frames, "n t c h w  ->  (n t) c h w")
@@ -329,36 +358,35 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
             query_frames = rearrange(
                 query_frames, "(n t) c h w -> n t c h w ", t=self.query_video_clip_sampler.clip_length)
 
-        # STEP 4: In validation set or test set, each query set consists of multiple video sequences rather than clips;
-        #         Thus, for each video sequence, we need to covert its sampled multiple clips tensors into a video tensor
+        # STEP 4: In testing, we need to convert sampled query clips tensors into video tensors
         if self.mode != "train":
             query_frames, query_labels, query_frame_filenames = \
                 self.__convert_multi_clips_into_video_sequences(query_frames, query_labels, query_frame_filenames)
 
-        episode_dict = {"support_frames": support_frames,  # Tensor[num_clip, clip_length, 3, 224, 224]
+        episode_dict = {"support_frames": support_frames,
                         "raw_support_frames": raw_support_frames,
-                        "support_targets": support_labels,  # Tensor[num_clip,]
-                        "support_frame_filenames": support_frame_filenames,  # List[str]
-                        # "raw_query_frames": raw_query_frames,
-                        # Train: Tensor[num_clip, clip_length, 3, 224, 224]
-                        # Test: List[Tensor(total_num_frames_one_video, 3, 224, 224)]
+                        "support_labels": support_labels,
+                        "support_frame_filenames": support_frame_filenames,
+                        "support_annotations": support_annotations,
                         "query_frames": query_frames,
-                        "query_targets": query_labels,
+                        "query_labels": query_labels,
                         "query_frame_filenames": query_frame_filenames,
-                        "category_names": category_names,  # List[str]
-                        "user_id": user_names  # str
+                        "query_annotations": support_annotations,
+                        "category_names": category_names,
+                        "user_id": user_names
                         }
+
+        # TODO: Hard coded for our proposed method, the edge detector need to access the raw RGB (0-255).
+        #  Need to remove or refactor in the future
+        if self.mode != "train":
+            episode_dict["raw_support_frames"] = raw_support_frames
 
         return episode_dict
 
     def __len__(self):
         return len(self.episodes)
 
-    def _generate_one_episode(self,
-                              category_names: List[str],
-                              category_name_to_instances: Dict[str, Dict],
-
-                              ):
+    def _generate_one_episode(self, category_names: List[str], category_name_to_instances: Dict[str, Dict]) -> Episode:
         sampled_category_names = self.category_sampler(category_names)
 
         support_set = []
@@ -427,10 +455,12 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
         multi_clips_annotations = _flatten_nested_list(multi_clips_annotations)
         return multi_clips_frame_tensors, multi_clips_labels, multi_clips_frame_filenames, multi_clips_annotations
 
-
     @staticmethod
-    def __shuffle_clips_indices(frames: torch.FloatTensor, labels: torch.LongTensor, frame_filenames: List,
-                                frame_annotations: List):
+    def __shuffle_clips_indices(frames: torch.FloatTensor,
+                                labels: torch.LongTensor,
+                                frame_filenames: List,
+                                frame_annotations: List) \
+            -> Tuple[torch.FloatTensor, torch.LongTensor, List, List]:
         indices = np.random.permutation(len(labels))
         frames = frames[indices]
         labels = labels[indices]
@@ -441,7 +471,8 @@ class UserCentricFewShotVideoClassificationDataset(torch.utils.data.Dataset):
     @staticmethod
     def __convert_multi_clips_into_video_sequences(frames: torch.FloatTensor,
                                                    labels: torch.LongTensor,
-                                                   frame_filenames: List[List[str]]):
+                                                   frame_filenames: List[List[str]]) \
+            -> Tuple[List[Tensor], List[Any], List[Any]]:
         """
             frames: (torch.FloatTensor), shape = [num_clips, clip_length, c, h, w]
             labels: (torch.LongTensor), shape = [num_clips, ]
@@ -479,27 +510,87 @@ def ORBITUserCentricVideoFewShotClassification(
         query_video_type: str = "clutter",
         support_clip_sampler: str = "random",
         query_clip_sampler: str = "max",
-        video_subsample_factor: int = 1,
-        video_clip_length: int = 8,
         max_num_clips_per_video: int = 10,
         max_num_sampled_frames_per_video: int = 1000,
+        video_subsample_factor: int = 1,
+        video_clip_length: int = 8,
         use_object_cluster_labels: bool = False,
         num_episodes_per_user: int = 50,
         transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
         num_threads: int = 8,
 ) -> torch.utils.data.Dataset:
+    """
+        The refactored data pipeline for ORBIT dataset, sharing the same API with the original one.
+        The original implementation can be found in https://github.com/microsoft/ORBIT-Dataset/blob/master/
+        data/datasets.py
+
+        This function is a wrapper of `UserCentricFewShotVideoClassificationDataset`
+
+        Args:
+            data_path (str): Path to ORBIT dataset root folder.
+
+            mode (str): train, validation, test
+
+            object_sampler (str): the type of sampler for objects; choice in ["random", "fixed", "max"]
+
+            max_num_objects_per_user (int): the maximum number of sampled objects from each user
+
+            support_instance_sampler (str): the type of sampler for support videos; choice in ["random", "fixed", "max"]
+
+            query_instance_sampler (str): the type of sampler for query videos; choice in ["random", "fixed", "max"]
+
+            support_num_shot (int): the number of videos sampled for the support set; (Only used in fixed sampler)
+
+            query_num_shot (int): the number of videos sampled for the query set; (Only used in fixed sampler)
+
+            max_num_instance_per_object (int): the maximum number of sampled videos from each object
+
+            query_video_type (str): Determine where to sample the query set: "clean" or "clutter";
+                In ORBIT_Challenge_2022, "clutter" is required
+
+            support_clip_sampler (str): Determine how to sample non-overlapping clips from each support video sequence;
+                choice in ["random", "fixed", "max", "uniform", "uniform_fixed_chunk_size"]
+
+            query_clip_sampler (str): Determine how to sample non-overlapping clips from each query video
+                sequence; In testing, "max" is strictly required to make sure all frames from each query videos are
+                sampled.
+
+            max_num_clips_per_video (int):  the maximum number of clips sampled from each video sequence
+
+            max_num_sampled_frames_per_video (int): the maximum number of first frames used for sampling clips
+
+            video_subsample_factor (int): Factor to subsample video frames before sampling clips.
+
+            video_clip_length (int): the number of frames in each sampled video clip
+
+            use_object_cluster_labels (bool): If True, use object cluster labels, otherwise use raw object labels.
+
+            num_episodes_per_user (int): the number of episodes randomly generated from each user; In training, to be
+                consistent with the number of total meta iterations in original ORBIT codebase, the default is 500
+                (500 * 44 train users = 22k iterations); To introduce more diversity of episodes, we can further
+                increase this number up to 1k. In testing, the default is 1.
+
+            transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]]: Compatible with transform functions
+                in torchvision
+
+            num_threads (int): the number of CPU threads used to accelerate I/O; Load images (*.jpg) from the disk
+    """
     if mode not in ["train", "validation", "test"]:
-        raise ValueError()
+        raise ValueError("ORBIT dataset has three subsets: train, validation, test; Please make a choice from them")
 
     if not os.path.exists(os.path.join(data_path, mode)):
         raise FileNotFoundError(os.path.join(data_path, mode))
+
     video_database = prepare_ORBIT_dataset(root_data_path=data_path, mode=mode)
 
     if object_sampler not in ["random", "max"]:
-        raise ValueError()
+        raise NotImplementedError("Only supports 'random object sampler', 'max object sampler' so far")
+
+    # Build object sampler
     object_sampler = make_sampler(sampling_type=object_sampler,
                                   min_num_samples=2,
                                   max_num_samples=max_num_objects_per_user)
+    # Build video (instance) samplers
     support_instance_sampler = make_sampler(sampling_type=support_instance_sampler,
                                             num_samples=support_num_shot,
                                             max_num_samples=max_num_instance_per_object)
@@ -509,12 +600,13 @@ def ORBITUserCentricVideoFewShotClassification(
     video_instance_sampler = ORBITDatasetVideoInstanceSampler(support_instance_sampler=support_instance_sampler,
                                                               query_instance_sampler=query_instance_sampler,
                                                               query_video_type=query_video_type)
+
+    # Build clip samplers
     support_clip_sampler = make_clip_sampler(sampling_type=support_clip_sampler,
                                              clip_length=video_clip_length,
                                              max_num_frame=max_num_sampled_frames_per_video,
                                              num_sampled_clips=max_num_clips_per_video,
                                              subsample_factor=video_subsample_factor)
-
     if mode == "train":
         query_clip_sampler = make_clip_sampler(sampling_type=query_clip_sampler,
                                                clip_length=video_clip_length,
@@ -539,36 +631,3 @@ def ORBITUserCentricVideoFewShotClassification(
         transform=transform,
         num_threads=num_threads,
         mode=mode)
-
-
-if __name__ == '__main__':
-    # self.normalize_stats = {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}  # imagenet mean train frame
-    transform = torchvision.transforms.Compose([
-        ApplyTransformToKey(
-            key="support_image",
-            transform=torchvision.transforms.Compose([
-                torchvision.transforms.Resize(84),
-                Div255(),
-            ])
-        ),
-        ApplyTransformToKey(
-            key="query_image",
-            transform=torchvision.transforms.Compose([
-                torchvision.transforms.Resize(84),
-                Div255(),
-            ])
-        ),
-        ApplyTransformToKey(
-            key="episode_label",
-            transform=torchvision.transforms.Compose([
-                MutuallyExclusiveLabel(shuffle_ordered_label=True),
-            ])
-        ),
-    ])
-
-    datasets = ORBITUserCentricVideoFewShotClassification(data_path="/data02/datasets/ORBIT_microsoft",
-                                                          num_episodes_per_user=10, transform=transform, num_threads=16,
-                                                          mode="validation")
-    dataloader = DataLoader(dataset=datasets, batch_size=1)
-    for i, batch in enumerate(tqdm(dataloader)):
-        a = 1

@@ -7,7 +7,6 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
 import numpy as np
 import cv2
 import torch
-from PIL import Image
 import concurrent.futures
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,6 @@ def thwc_to_tchw(data: torch.Tensor) -> torch.Tensor:
     return data.permute(0, 3, 1, 2)
 
 
-
 def thwc_to_cthw_numpy(data: np.ndarray) -> np.ndarray:
     """
     Permute tensor from (time, height, weight, channel) to
@@ -44,7 +42,7 @@ def thwc_to_cthw_numpy(data: np.ndarray) -> np.ndarray:
 
 
 def optional_threaded_foreach(
-    target: Callable, args_iterable: Iterable[Tuple], multithreaded: bool,
+        target: Callable, args_iterable: Iterable[Tuple], multithreaded: bool,
 ):
     """
     Applies 'target' function to each Tuple args in 'args_iterable'.
@@ -84,9 +82,9 @@ def optional_multi_thread(target, args, max_workers=8):
 
 
 def _load_images_with_retries(
-    image_paths: List[str],
+        image_paths: List[str],
         num_retries: int = 10,
-        num_threads:int = 8,
+        num_threads: int = 8,
         rgb: bool = True
 ) -> torch.Tensor:
     """
@@ -122,24 +120,13 @@ def _load_images_with_retries(
                 logging.warning(f"Reading attempt {i}/{num_retries} failed.")
                 time.sleep(1e-6)
 
-    # optional_threaded_foreach(fetch_image, enumerate(image_paths), multithreaded=True)
-    # if num_threads > 1:
-    #     optional_multi_thread(fetch_image, list(enumerate(image_paths)), max_workers=num_threads)
-    # else:
-    #     optional_threaded_foreach(fetch_image, enumerate(image_paths), multithreaded=False)
     optional_multi_thread(fetch_image, list(enumerate(image_paths)), max_workers=num_threads)
 
     for img, p in zip(imgs, image_paths):
         if img is None:
             raise Exception("Failed to load images from {}".format(p))
 
-
-
-    # if any((img is None for img in imgs)):
-    #     raise Exception("Failed to load images from {}".format(image_paths))
-
     return torch.as_tensor(np.stack(imgs))
-    # return np.stack(imgs)
 
 
 def _flatten_nested_list(nested_list):
@@ -154,6 +141,7 @@ def sort_dictionary_with_key(mapping):
 def sort_dictionary_with_value(mapping):
     mapping = {k: v for k, v in sorted(mapping.items(), key=lambda item: item[1])}
     return mapping
+
 
 def _ndarray_to_list(elements):
     return [element for element in elements]
