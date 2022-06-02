@@ -5,8 +5,8 @@
 
 **Team members**
 - Li Gu
-- Zhixiang Chi
-- Huan Liu
+- Zhixiang Chi*
+- Huan Liu*
 - Yuanhao Yu
 - Yang Wang
 - Jin Tang
