@@ -10,6 +10,7 @@
 - Yuanhao Yu
 - Yang Wang
 - Jin Tang
+\* denotes equal contribution.
 
 **Contact**
 - li.gu@huawei.com
