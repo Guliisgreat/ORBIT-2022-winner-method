@@ -1,5 +1,5 @@
 ## News
-- **(2022/6/10)** We are invited to present our method at the [CVPR 2022 VizWiz Grand Challenge Workshop](https://vizwiz.org/workshops/2022-workshop/)
+- **(2022/6/20)** We are invited to present our method at the [CVPR 2022 VizWiz Grand Challenge Workshop](https://vizwiz.org/workshops/2022-workshop/)
 - **(2022/5/13)** Great! We are the winner of the ORBIT Few-Shot Object Recognition Challenge
 
 
