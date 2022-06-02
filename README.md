@@ -37,7 +37,6 @@ support video sequence, and some frames suffer from "object_not_present_issue". 
 on prototypes. -->
 
 ## Our proposed method
-### [video](https://mcmasteru365-my.sharepoint.com/:v:/g/personal/liuh127_mcmaster_ca/EdZHIOxqoFhAn5UUj85Q2fQBZd6YYKFsuemTQOtw3X6WDA?e=XNB53A)
 
 ProtoNet aims to produce class prototypes from the support data samples at the personalization stage, and the query data samples can be classified by directly comparing their embeddings with the prototypes using a similarity metric at the recognization stage. Due to the characteristics of the ORBIT-dataset, there are several reasons that hinder the generation of high-quality prototypes. First, due to the distribution shift between support and query videos (clean vs. clutter), using the same backbone to extract clip features from both two sets is sub-optimal. Second, each user's videos are collected from limited scenes, which results in similar background or multiple target user-specific objects [issue](https://github.com/microsoft/ORBIT-Dataset/issues/4). Thirdly, there are dramatic appearance changes across each support video sequence, and some frames suffer from "object_not_present_issue". Thus, randomly sampled clips from support video sequences will not contribute comprehensive information 
 on prototypes.
