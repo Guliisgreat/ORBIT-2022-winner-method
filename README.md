@@ -1,7 +1,7 @@
 ### [video](https://drive.google.com/file/d/1XIB0MgE1uxi32xiYpwMDjRMmqXvotu79/view?usp=sharing) | [slides](https://docs.google.com/presentation/d/1wZt4OzPpD22AWqFMcoUNqfLbzwPpFqMg/edit?usp=sharing&ouid=116829110622813007518&rtpof=true&sd=true)
 ## News
 - **(2022/6/20)** We are invited to present our method at the [CVPR 2022 VizWiz Grand Challenge Workshop](https://vizwiz.org/workshops/2022-workshop/)
-- **(2022/5/13)** Great! We are the winner of the ORBIT Few-Shot Object Recognition Challenge
+- **(2022/5/13)** Great! We are the winner of the [ORBIT Few-Shot Object Recognition Challenge](https://eval.ai/challenge/1438/overview)
 
 
 ## Abstract
