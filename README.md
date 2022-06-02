@@ -1,7 +1,9 @@
 ## Team Information
 **Team name**: canada_goose
 
+<!---
 **Institute**:  Noah's Ark Lab, Toronto office, Huawei Canada
+-->
 
 **Team members**
 - Li Gu
