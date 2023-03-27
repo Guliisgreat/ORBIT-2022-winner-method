@@ -28,6 +28,15 @@ We consider the generic problem of detecting low-level structures in images, whi
 - li.gu@huawei.com
 - liuh127@mcmaster.ca
 
+If you use the code in this repo, please cite the following bib entries:
+
+    @article{gu2022improving,
+        title={Improving protonet for few-shot video object recognition: Winner of orbit challenge 2022},
+        author={Gu, Li and Chi, Zhixiang and Liu, Huan and Yu, Yuanhao and Wang, Yang},
+        journal={arXiv preprint arXiv:2210.00174},
+        year={2022}
+      }
+
 <!-- ## Our proposed method
 
 ProtoNet baseline method does not perform very well on the ORBIT dataset because the few-shot learner cannot build high-quality prototypes at the personalization stage.
