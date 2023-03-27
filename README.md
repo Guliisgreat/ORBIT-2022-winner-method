@@ -1,11 +1,11 @@
-### [video](https://drive.google.com/file/d/1XIB0MgE1uxi32xiYpwMDjRMmqXvotu79/view?usp=sharing) | [slides](https://docs.google.com/presentation/d/1wZt4OzPpD22AWqFMcoUNqfLbzwPpFqMg/edit?usp=sharing&ouid=116829110622813007518&rtpof=true&sd=true)
+### [video](https://drive.google.com/file/d/1XIB0MgE1uxi32xiYpwMDjRMmqXvotu79/view?usp=sharing) | [slides](https://docs.google.com/presentation/d/1wZt4OzPpD22AWqFMcoUNqfLbzwPpFqMg/edit?usp=sharing&ouid=116829110622813007518&rtpof=true&sd=true) | [paper](https://arxiv.org/pdf/2210.00174.pdf)
 ## News
 - **(2022/6/20)** We are invited to present our method at the [CVPR 2022 VizWiz Grand Challenge Workshop](https://vizwiz.org/workshops/2022-workshop/)
 - **(2022/5/13)** Great! We are the winner of the [ORBIT Few-Shot Object Recognition Challenge](https://eval.ai/challenge/1438/overview)
 
 
 ## Abstract
-To be updated.
+We consider the generic problem of detecting low-level structures in images, which includes segmenting the manipulated parts, identifying out-of-focus pixels, separating shadow regions, and detecting concealed objects. Whereas each such topic has been typically addressed with a domainspecific solution, we show that a unified approach performs well across all of them. We take inspiration from the widelyused pre-training and then prompt tuning protocols in NLP and propose a new visual prompting model, named Explicit Visual Prompting (EVP). Different from the previous visual prompting which is typically a dataset-level implicit embedding, our key insight is to enforce the tunable parameters focusing on the explicit visual content from each individual image, i.e., the features from frozen patch embeddings and the input’s high-frequency components. The proposed EVP significantly outperforms other parameter-efficient tuning protocols under the same amount of tunable parameters (5.7% extra trainable parameters of each task). EVP also achieves state-of-the-art performances on diverse lowlevel structure segmentation tasks compared to task-specific solutions
 
 ## Team Information
 **Team name**: canada_goose
