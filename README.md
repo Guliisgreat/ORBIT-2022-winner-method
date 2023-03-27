@@ -5,7 +5,7 @@
 
 
 ## Abstract
-We consider the generic problem of detecting low-level structures in images, which includes segmenting the manipulated parts, identifying out-of-focus pixels, separating shadow regions, and detecting concealed objects. Whereas each such topic has been typically addressed with a domainspecific solution, we show that a unified approach performs well across all of them. We take inspiration from the widelyused pre-training and then prompt tuning protocols in NLP and propose a new visual prompting model, named Explicit Visual Prompting (EVP). Different from the previous visual prompting which is typically a dataset-level implicit embedding, our key insight is to enforce the tunable parameters focusing on the explicit visual content from each individual image, i.e., the features from frozen patch embeddings and the input’s high-frequency components. The proposed EVP significantly outperforms other parameter-efficient tuning protocols under the same amount of tunable parameters (5.7% extra trainable parameters of each task). EVP also achieves state-of-the-art performances on diverse lowlevel structure segmentation tasks compared to task-specific solutions
+In this work, we present the winning solution for ORBIT Few-Shot Video Object Recognition Challenge 2022. Built upon the ProtoNet baseline, the performance of our method is improved with three effective techniques. These techniques include the embedding adaptation, the uniform video clip sampler and the invalid frame detection. In addition, we re-factor and re-implement the official codebase to encourage modularity, compatibility and improved performance. Our implementation accelerates the data loading in both training and testing.
 
 ## Team Information
 **Team name**: canada_goose
